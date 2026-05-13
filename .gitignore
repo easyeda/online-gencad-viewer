@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.local
+.vscode/*
+!.vscode/extensions.json
+/node_modules/
+/.claude/
