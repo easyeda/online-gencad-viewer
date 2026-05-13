@@ -39,12 +39,14 @@ export function primitiveToUI(p: GenCADPrimitive, color: string, strokeWidth = 0
       return el;
     }
     case 'ARC': {
-      const d = arcToSVGPath(p);
+      const d = `M ${p.xs} ${-p.ys} ` + arcSVGSegment(p);
       const el = new Path({
         path: d,
         fill: undefined,
         stroke: color,
         strokeWidth,
+        strokeCap: 'round',
+        strokeJoin: 'round',
       });
       return el;
     }
@@ -66,7 +68,7 @@ export function primitivesToPath(prims: GenCADPrimitive[], color: string): UI {
       case 'ARC': {
         if (!started) { d += `M ${p.xs} ${-p.ys} `; started = true; }
         else { d += `L ${p.xs} ${-p.ys} `; }
-        d += arcToSVGArcSegment(p) + ' ';
+        d += arcSVGSegment(p) + ' ';
         break;
       }
       case 'CIRCLE': {
@@ -94,27 +96,27 @@ export function primitivesToPath(prims: GenCADPrimitive[], color: string): UI {
   return el;
 }
 
-export function arcToSVGPath(a: { xs: number; ys: number; xe: number; ye: number; xc: number; yc: number }): string {
-  return `M ${a.xs} ${-a.ys} ` + arcToSVGArcSegment(a);
-}
-
-function arcToSVGArcSegment(a: { xs: number; ys: number; xe: number; ye: number; xc: number; yc: number }): string {
+/**
+ * Generate SVG A (arc) path segment for a GenCAD ARC.
+ * GenCAD: CCW from (xs,ys) to (xe,ye) center (xc,yc) in Y-up coords.
+ * Screen: Y negated, so CCW becomes CW → SVG sweep-flag = 0.
+ */
+function arcSVGSegment(a: { xs: number; ys: number; xe: number; ye: number; xc: number; yc: number }): string {
   const dxs = a.xs - a.xc;
   const dys = a.ys - a.yc;
-  const dxe = a.xe - a.xc;
-  const dye = a.ye - a.yc;
-
   const r = Math.sqrt(dxs * dxs + dys * dys);
   if (r < 1e-10) return '';
 
   const startAngle = Math.atan2(dys, dxs);
-  const endAngle = Math.atan2(dye, dxe);
+  const endAngle = Math.atan2(a.ye - a.yc, a.xe - a.xc);
+
+  // CCW sweep in Y-up
   let sweep = endAngle - startAngle;
   while (sweep <= 0) sweep += 2 * Math.PI;
 
+  // After Y negation, CCW becomes CW. SVG sweep-flag 0 = CW.
+  // large-arc: if original sweep > 180°
   const largeArc = sweep > Math.PI ? 1 : 0;
-  // Y is negated, so CCW in Y-up becomes CW in Y-down → sweep=0
-  const svgSweep = 0;
 
-  return `A ${r} ${r} 0 ${largeArc} ${svgSweep} ${a.xe} ${-a.ye}`;
+  return `A ${r} ${r} 0 ${largeArc} 0 ${a.xe} ${-a.ye}`;
 }

@@ -17,11 +17,12 @@ const T: Record<Lang, Record<string, string>> = {
     propNodeCount: '节点数', propNodes: '节点', propElement: '元素',
     allLayers: '全部图层',
     pads: '焊盘', drills: '钻孔层',
-    about: '关于', aboutAuthor: '作者', aboutRepo: '仓库', aboutVersion: '版本', aboutBuildDate: '编译日期', aboutEngine: '渲染引擎',
+    about: '关于', aboutAuthor: '作者', aboutRepo: '仓库', aboutVersion: '版本', aboutBuildDate: '编译日期', aboutEngine: '渲染引擎', aboutDesc: '在线 GenCAD 查看器，支持多层布局、走线、焊盘、过孔、丝印等元素的交互式可视化展示。',
     welcomeTitle: 'Online GenCAD Viewer',
     welcomeDesc: '在线 GenCAD 查看器，方便查看 PCB 的布局与走线',
     welcomeClick: '点击此处或工具栏「打开文件」按钮加载文件',
     welcomeDrag: '也可以直接拖拽 .cad 文件到此区域',
+    welcomeSample: '打开示例文件',
   },
   en: {
     openFile: 'Open File', zoomIn: 'Zoom In', zoomOut: 'Zoom Out', fitScreen: 'Fit View',
@@ -35,11 +36,12 @@ const T: Record<Lang, Record<string, string>> = {
     propNodeCount: 'Node Count', propNodes: 'Nodes', propElement: 'Element',
     allLayers: 'All Layers',
     pads: 'Pads', drills: 'Drills',
-    about: 'About', aboutAuthor: 'Author', aboutRepo: 'Repository', aboutVersion: 'Version', aboutBuildDate: 'Build Date', aboutEngine: 'Render Engine',
+    about: 'About', aboutAuthor: 'Author', aboutRepo: 'Repository', aboutVersion: 'Version', aboutBuildDate: 'Build Date', aboutEngine: 'Render Engine', aboutDesc: 'Online GenCAD viewer with interactive multi-layer visualization for PCB layout, routing, pads, vias, and silkscreen.',
     welcomeTitle: 'Online GenCAD Viewer',
     welcomeDesc: 'Online GenCAD viewer for PCB layout and routing',
     welcomeClick: 'Click here or the "Open File" button to load a file',
     welcomeDrag: 'You can also drag and drop a .cad file into this area',
+    welcomeSample: 'Open Sample File',
   },
 };
 
@@ -88,6 +90,7 @@ export interface LayoutRefs {
   btnZoomIn: HTMLButtonElement;
   btnZoomOut: HTMLButtonElement;
   btnFit: HTMLButtonElement;
+  sampleBtn: HTMLButtonElement;
 }
 
 export function createLayout(): LayoutRefs {
@@ -123,16 +126,17 @@ export function createLayout(): LayoutRefs {
   aboutBtn.style.cssText += 'width:28px;text-align:center;padding:4px 0;font-size:14px;border-radius:50%;';
 
   const aboutDrop = document.createElement('div');
-  aboutDrop.style.cssText = 'display:none;position:absolute;top:100%;right:0;margin-top:4px;background:var(--gc-bg2);border:1px solid var(--gc-border2);border-radius:6px;padding:12px 16px;min-width:240px;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,0.4);font-size:12px;color:var(--gc-fg);line-height:1.8;';
+  aboutDrop.style.cssText = 'display:none;position:absolute;top:100%;right:0;margin-top:4px;background:var(--gc-bg2);border:1px solid var(--gc-border2);border-radius:6px;padding:16px 20px;min-width:320px;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,0.4);font-size:12px;color:var(--gc-fg);line-height:1.8;';
 
   function renderAbout() {
     aboutDrop.innerHTML =
-      `<div style="font-size:14px;font-weight:600;margin-bottom:6px;color:var(--gc-fg);">Online GenCAD Viewer</div>` +
+      `<div style="font-size:15px;font-weight:600;margin-bottom:8px;color:var(--gc-fg);">Online GenCAD Viewer</div>` +
+      `<div style="font-size:11px;color:var(--gc-fg2);margin-bottom:10px;line-height:1.6;">${t('aboutDesc')}</div>` +
       `<div><span style="color:var(--gc-fg2)">${t('aboutAuthor')}:</span> <a href="https://easyeda.com" target="_blank" rel="noopener" style="color:var(--gc-accent-b);text-decoration:none;">EasyEDA</a></div>` +
       `<div><span style="color:var(--gc-fg2)">${t('aboutEngine')}:</span> <a href="https://www.leaferjs.com" target="_blank" rel="noopener" style="color:var(--gc-accent-b);text-decoration:none;">LeaferJS</a></div>` +
       `<div><span style="color:var(--gc-fg2)">${t('aboutVersion')}:</span> ${__VERSION__}</div>` +
       `<div><span style="color:var(--gc-fg2)">${t('aboutBuildDate')}:</span> ${__BUILD_DATE__}</div>` +
-      `<div style="margin-top:4px;"><span style="color:var(--gc-fg2)">${t('aboutRepo')}:</span> <a href="https://github.com/easyeda/online-gencad-viewer" target="_blank" rel="noopener" style="color:var(--gc-accent-b);text-decoration:none;word-break:break-all;">github.com/easyeda/online-gencad-viewer</a></div>`;
+      `<div style="margin-top:6px;"><span style="color:var(--gc-fg2)">${t('aboutRepo')}:</span> <a href="https://github.com/easyeda/online-gencad-viewer" target="_blank" rel="noopener" style="color:var(--gc-accent-b);text-decoration:none;word-break:break-all;">github.com/easyeda/online-gencad-viewer</a></div>`;
   }
   renderAbout();
 
@@ -197,6 +201,9 @@ export function createLayout(): LayoutRefs {
   // Welcome overlay
   const welcomeOverlay = document.createElement('div');
   welcomeOverlay.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;user-select:none;';
+  const sampleBtn = document.createElement('button');
+  sampleBtn.textContent = t('welcomeSample');
+  sampleBtn.style.cssText = 'margin-top:20px;padding:8px 20px;background:var(--gc-accent);color:#fff;border:1px solid var(--gc-accent-b);border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit;pointer-events:auto;';
   welcomeOverlay.innerHTML =
     `<div style="text-align:center;pointer-events:none;">` +
     `<div style="font-size:24px;font-weight:600;color:var(--gc-fg);margin-bottom:12px;">${t('welcomeTitle')}</div>` +
@@ -206,6 +213,7 @@ export function createLayout(): LayoutRefs {
     `<div style="font-size:13px;color:var(--gc-fg);margin-bottom:8px;">${t('welcomeClick')}</div>` +
     `<div style="font-size:12px;color:var(--gc-fg2);">${t('welcomeDrag')}</div>` +
     `</div></div>`;
+  welcomeOverlay.appendChild(sampleBtn);
   canvasContainer.appendChild(welcomeOverlay);
 
   // Right panel
@@ -250,7 +258,7 @@ export function createLayout(): LayoutRefs {
     container, toolbar, leftPanel, canvasContainer, canvasDiv, welcomeOverlay,
     rightPanel, propertyContent: propContent, layerPanel, filterPanel,
     compList, compSearch, netList, netSearch, fileNameEl,
-    btnOpen, btnZoomIn, btnZoomOut, btnFit,
+    btnOpen, btnZoomIn, btnZoomOut, btnFit, sampleBtn,
   };
 }
 

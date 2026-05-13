@@ -1,3 +1,4 @@
+import './style.css';
 import { createLayout, t, onLangChange } from './ui/layout';
 import { setupFilePicker } from './ui/file-picker';
 import { showProperties, clearProperties } from './ui/property-panel';
@@ -7,6 +8,7 @@ import { parseGenCAD } from './parser';
 import { renderAll, RenderResult } from './renderer';
 import type { GenCADData } from './parser/types';
 import { Group, UI, Leafer } from 'leafer-ui';
+import sampleCad from '../docs/lckfb.cad?raw';
 
 const layout = createLayout();
 let renderResult: RenderResult | null = null;
@@ -83,6 +85,12 @@ function populatePanels() {
 
 // File picker
 setupFilePicker(layout.btnOpen, layout.canvasContainer, loadFile, layout.welcomeOverlay);
+
+// Sample file button
+layout.sampleBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  loadFile(sampleCad, 'lckfb.cad');
+});
 
 // Click canvas to exit highlight mode
 let pointerDownPos: { x: number; y: number } | null = null;
