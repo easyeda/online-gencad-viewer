@@ -74,33 +74,32 @@ Online GenCAD Viewer 是一个纯前端的在线 PCB 文件查看器，支持解
 | 序号 | 图层 Key | 说明 |
 |------|----------|------|
 | 1 | BOARD | 板框 |
-| 1.5 | BOARD_TEXTS | 板框文本（BOARD 段 TEXT） |
-| 2 | ROUTES_BOTTOM | 底层走线容器 |
-| 3 | ROUTE_BOTTOM | 底层走线 |
-| 3.5 | LABELS_BOTTOM | 底层导线网络名标签 |
-| 4 | PADS_BOTTOM | 底层焊盘（含 TH 焊盘的底层部分） |
-| 4.5 | PAD_LABELS_BOTTOM | 底层焊盘网络名标签 |
-| 5 | SILK_OUTLINE_BOTTOM | 底层丝印轮廓（含 ARTWORK 图元） |
-| 6 | SILK_TEXT_BOTTOM | 底层丝印文本（位号，含 ARTWORK 文本） |
-| 7 | VALUE_TEXT_BOTTOM | 底层值文本 |
-| 8 | ROUTES | 内层走线容器 |
-| 9 | ROUTE_INNER-n | 内层走线 |
-| 9.5 | LABELS_INNER-n | 内层导线网络名标签 |
-| 10 | PADS_INNER-n | 内层焊盘（含 TH 焊盘的内层部分） |
-| 10.5 | PAD_LABELS_INNER-n | 内层焊盘网络名标签 |
-| 11 | ROUTES_TOP | 顶层走线容器 |
-| 12 | ROUTE_TOP | 顶层走线 |
-| 12.5 | LABELS_TOP | 顶层导线网络名标签 |
-| 13 | PADS_TOP | 顶层焊盘（含 TH 焊盘的顶层部分） |
-| 13.5 | PAD_LABELS_TOP | 顶层焊盘网络名标签 |
-| 14 | COMPONENTS | 元件轮廓组 |
-| 15 | SILK_OUTLINE_TOP | 顶层丝印轮廓（含 ARTWORK 图元） |
-| 16 | SILK_TEXT_TOP | 顶层丝印文本（位号，含 ARTWORK 文本） |
-| 17 | VALUE_TEXT_TOP | 顶层值文本 |
-| 18 | TH_DRILLS | 通孔钻孔 |
-| 19 | VIAS_TOP / VIAS_BOTTOM / VIAS_INNER-n | 过孔焊盘（按层分组，BOTTOM→INNER→TOP 排序） |
-| 20 | VIA_DRILLS | 过孔钻孔 |
-| 20.5 | ROUTE_TEXTS | 走线文本（ROUTES 段 TEXT） |
+| 2 | BOARD_TEXTS | 板框文本（BOARD 段 TEXT） |
+| 3 | ROUTES_BOTTOM | 底层走线容器 |
+| 4 | ROUTE_BOTTOM | 底层走线 |
+| 5 | LABELS_BOTTOM | 底层导线网络名标签 |
+| 6 | PADS_BOTTOM | 底层焊盘（含 TH 焊盘的底层部分） |
+| 7 | PAD_LABELS_BOTTOM | 底层焊盘网络名标签 |
+| 8 | SILK_OUTLINE_BOTTOM | 底层丝印轮廓（含 ARTWORK 图元） |
+| 9 | SILK_TEXT_BOTTOM | 底层丝印文本（位号，含 ARTWORK 文本） |
+| 10 | VALUE_TEXT_BOTTOM | 底层值文本 |
+| 11 | ROUTE_INNER-n | 内层走线（按层穿插标签/焊盘） |
+| 11.5 | LABELS_INNER-n | 内层导线网络名标签 |
+| 12 | PADS_INNER-n | 内层焊盘（含 TH 焊盘的内层部分） |
+| 12.5 | PAD_LABELS_INNER-n | 内层焊盘网络名标签 |
+| 13 | ROUTES_TOP | 顶层走线容器 |
+| 14 | ROUTE_TOP | 顶层走线 |
+| 15 | LABELS_TOP | 顶层导线网络名标签 |
+| 16 | PADS_TOP | 顶层焊盘（含 TH 焊盘的顶层部分） |
+| 17 | PAD_LABELS_TOP | 顶层焊盘网络名标签 |
+| 18 | COMPONENTS | 元件轮廓组 |
+| 19 | SILK_OUTLINE_TOP | 顶层丝印轮廓（含 ARTWORK 图元） |
+| 20 | SILK_TEXT_TOP | 顶层丝印文本（位号，含 ARTWORK 文本） |
+| 21 | VALUE_TEXT_TOP | 顶层值文本 |
+| 22 | TH_DRILLS | 通孔钻孔 |
+| 23 | VIAS_BOTTOM / VIAS_INNER-n / VIAS_TOP | 过孔焊盘（按层分组，BOTTOM→INNER→TOP 排序） |
+| 24 | VIA_DRILLS | 过孔钻孔 |
+| 25 | ROUTE_TEXTS | 走线文本（ROUTES 段 TEXT） |
 
 ### 2.6 焊盘层分配规则
 
@@ -149,7 +148,7 @@ Online GenCAD Viewer 是一个纯前端的在线 PCB 文件查看器，支持解
 | 按钮 | 控制目标 |
 |------|----------|
 | 全部 | 所有过滤器联动开关 |
-| 导线 | ROUTES_BOTTOM, ROUTES, ROUTES_TOP |
+| 导线 | ROUTES_BOTTOM, ROUTE_INNER-*, ROUTES_TOP |
 | 过孔 | VIA_DRILLS + 所有 VIAS_* |
 | 元件 | SILK_OUTLINE_*, PADS_*, TH_DRILLS |
 | 位号 | SILK_TEXT_TOP, SILK_TEXT_BOTTOM |
@@ -203,8 +202,7 @@ Online GenCAD Viewer 是一个纯前端的在线 PCB 文件查看器，支持解
 - 颜色按层分配（colors.ts 定义）
 - 圆弧走线使用 SVG Arc path（`arcSVGSegment`），strokeCap: 'round'
 - GenCAD CCW 弧在 Y-down 坐标系中变为 CW → SVG sweep-flag = 0
-- 网络名标签：白色，字体高度��导线宽度的 95%（最小 `sw*3`），居中显示在最长线段上
-- 标签仅在线段长度足够容纳文本时显示
+- 网络名标签：白色，字体大小不超过导线宽度，且不超过最长线段长度/字符数*0.6，居中显示在最长线段上
 
 ### 4.2 焊盘
 

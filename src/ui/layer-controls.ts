@@ -36,7 +36,7 @@ export function initLayerControls(panel: HTMLElement, layers: Map<string, Group>
 
   // Discover route layers
   for (const [key, group] of layers) {
-    if (key.startsWith('ROUTE_')) {
+    if (key.startsWith('ROUTE_') && !key.startsWith('ROUTES_')) {
       const layerName = key.replace('ROUTE_', '');
       layerDefs.push({ key, name: formatLayerName(layerName), type: 'route' });
     }
@@ -182,7 +182,7 @@ export function initFilterControls(panel: HTMLElement, layers: Map<string, Group
 
   const FILTER_DEFS = [
     { key: 'all', targets: ['all'], defaultActive: true },
-    { key: 'routes', targets: ['ROUTES_BOTTOM', 'ROUTES', 'ROUTES_TOP'], defaultActive: true },
+    { key: 'routes', targets: ['ROUTES_BOTTOM', ...[...layers.keys()].filter(k => k.startsWith('ROUTE_INNER')), 'ROUTES_TOP'], defaultActive: true },
     { key: 'vias', targets: ['VIA_DRILLS', ...[...layers.keys()].filter(k => k.startsWith('VIAS_'))], defaultActive: true },
     { key: 'compFilter', targets: [
       'SILK_OUTLINE_TOP', 'SILK_OUTLINE_BOTTOM',
@@ -193,7 +193,6 @@ export function initFilterControls(panel: HTMLElement, layers: Map<string, Group
     { key: 'ref', targets: ['SILK_TEXT_TOP', 'SILK_TEXT_BOTTOM'], defaultActive: true },
     { key: 'value', targets: ['VALUE_TEXT_TOP', 'VALUE_TEXT_BOTTOM'], defaultActive: true },
     { key: 'labels', targets: [...[...layers.keys()].filter(k => k.startsWith('LABELS_') || k.startsWith('PAD_LABELS_'))], defaultActive: true },
-    { key: 'text', targets: ['BOARD_TEXTS', 'ROUTE_TEXTS'], defaultActive: true },
   ];
 
   const states = new Map<string, boolean>();

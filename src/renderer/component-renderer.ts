@@ -265,7 +265,7 @@ export function renderComponents(
             const labelText = sigName ? `${pin.pinName}:${sigName}` : pin.pinName;
             const padSize = getPadSizeFromPrims(linkedPad.primitives);
             const padLong = getPadLongDim(linkedPad.primitives);
-            const fontSize = Math.min(padSize, padLong / Math.max(labelText.length * 0.5, 1));
+            const fontSize = Math.min(padSize, padLong / Math.max(labelText.length * 0.65, 1));
             if (fontSize > 0) {
               const padAngle = getPadOrientation(linkedPad.primitives);
               const pos = toWorldPos(comp, pin.x, pin.y);
@@ -374,7 +374,7 @@ export function renderComponents(
         const padSizeForLabel = smdPrims.length > 0 ? getPadSizeFromPrims(smdPrims) : sw * 6;
         const padLongForLabel = smdPrims.length > 0 ? getPadLongDim(smdPrims) : sw * 6;
         const padAngleForLabel = smdPrims.length > 0 ? getPadOrientation(smdPrims) : 0;
-        const fontSize = Math.min(padSizeForLabel, padLongForLabel / Math.max(labelText.length * 0.5, 1));
+        const fontSize = Math.min(padSizeForLabel, padLongForLabel / Math.max(labelText.length * 0.65, 1));
         if (fontSize > 0) {
           const pos = toWorldPos(comp, pin.x, pin.y);
           const lblRot = toWorldRot(comp, padAngleForLabel + (pin.rot || 0));

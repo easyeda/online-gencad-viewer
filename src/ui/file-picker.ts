@@ -13,7 +13,12 @@ export function setupFilePicker(
 
   openBtn.addEventListener('click', () => input.click());
   if (welcomeOverlay) {
-    welcomeOverlay.addEventListener('click', () => input.click());
+    welcomeOverlay.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-welcome-dropzone]')) {
+        input.click();
+      }
+    });
   }
   input.addEventListener('change', () => {
     const file = input.files?.[0];

@@ -27,9 +27,9 @@ GenCAD uses Y-up coordinates. The renderer negates Y during element creation (`y
 
 ### Layer stacking order (back → front)
 
-BOARD → BOARD_TEXTS → ROUTES_BOTTOM → LABELS_BOTTOM → PADS_BOTTOM → PAD_LABELS_BOTTOM → SILK_OUTLINE_BOTTOM → SILK_TEXT_BOTTOM → VALUE_TEXT_BOTTOM → ROUTES (inner) → LABELS_INNER → PADS_INNER → PAD_LABELS_INNER → ROUTES_TOP → LABELS_TOP → PADS_TOP → PAD_LABELS_TOP → COMPONENTS → SILK_OUTLINE_TOP → SILK_TEXT_TOP → VALUE_TEXT_TOP → TH_DRILLS → VIAS_* → VIA_DRILLS → ROUTE_TEXTS
+BOARD → BOARD_TEXTS → ROUTES_BOTTOM → LABELS_BOTTOM → PADS_BOTTOM → PAD_LABELS_BOTTOM → SILK_OUTLINE_BOTTOM → SILK_TEXT_BOTTOM → VALUE_TEXT_BOTTOM → [per-inner-layer: ROUTE_INNER → LABELS_INNER → PADS_INNER → PAD_LABELS_INNER] → ROUTES_TOP → LABELS_TOP → PADS_TOP → PAD_LABELS_TOP → COMPONENTS → SILK_OUTLINE_TOP → SILK_TEXT_TOP → VALUE_TEXT_TOP → TH_DRILLS → VIAS_* → VIA_DRILLS → ROUTE_TEXTS
 
-Key: both route labels (LABELS_*) and pad labels (PAD_LABELS_*) are per-layer, interleaved with their respective route/pad layers.
+Key: both route labels (LABELS_*) and pad labels (PAD_LABELS_*) are per-layer, interleaved with their respective route/pad layers. TH_DRILLS after silk, before vias. No ROUTES container for inner layers — individual ROUTE_INNER groups are added directly.
 
 ### Key conventions
 

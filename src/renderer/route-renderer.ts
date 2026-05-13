@@ -68,10 +68,10 @@ export function renderRoutes(
 
       // Add net name label on longest primitive
       if (seg.primitives.length > 0 && route.signalName) {
-        let cx = 0, cy = 0, angle = 0;
+        let cx = 0, cy = 0, angle = 0, maxLen = 0;
         const lines = seg.primitives.filter(p => p.type === 'LINE') as { type: 'LINE'; x1: number; y1: number; x2: number; y2: number }[];
         if (lines.length > 0) {
-          let longest = lines[0], maxLen = 0;
+          let longest = lines[0];
           for (const l of lines) {
             const len = Math.sqrt((l.x2 - l.x1) ** 2 + (l.y2 - l.y1) ** 2);
             if (len > maxLen) { maxLen = len; longest = l; }
@@ -88,7 +88,8 @@ export function renderRoutes(
         }
         if (angle > 90) angle -= 180;
         else if (angle < -90) angle += 180;
-        const fontSize = Math.min(trackSw, Math.max(trackSw * 0.95, sw * 3));
+        const maxFontByLen = maxLen > 0 ? maxLen / Math.max(route.signalName.length * 0.6, 1) : trackSw;
+        const fontSize = Math.max(Math.min(trackSw, maxFontByLen), sw);
         const textEl = new Text({
           x: cx,
           y: cy,

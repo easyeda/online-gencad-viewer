@@ -223,7 +223,7 @@ export function createLayout(): LayoutRefs {
 
   // Welcome overlay
   const welcomeOverlay = document.createElement('div');
-  welcomeOverlay.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;user-select:none;';
+  welcomeOverlay.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;user-select:none;';
   const sampleBtn = document.createElement('button');
   sampleBtn.textContent = t('welcomeSample');
   sampleBtn.style.cssText = 'margin-top:20px;padding:8px 20px;background:var(--gc-accent);color:#fff;border:1px solid var(--gc-accent-b);border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit;pointer-events:auto;';
@@ -231,7 +231,7 @@ export function createLayout(): LayoutRefs {
     `<div style="text-align:center;pointer-events:none;">` +
     `<div style="font-size:24px;font-weight:600;color:var(--gc-fg);margin-bottom:12px;">${t('welcomeTitle')}</div>` +
     `<div style="font-size:14px;color:var(--gc-fg2);margin-bottom:24px;">${t('welcomeDesc')}</div>` +
-    `<div style="border:2px dashed var(--gc-border2);border-radius:12px;padding:32px 48px;display:inline-block;">` +
+    `<div style="border:2px dashed var(--gc-border2);border-radius:12px;padding:32px 48px;display:inline-block;cursor:pointer;pointer-events:auto;" data-welcome-dropzone>` +
     `<div style="font-size:36px;margin-bottom:12px;color:var(--gc-fg2);">+</div>` +
     `<div style="font-size:13px;color:var(--gc-fg);margin-bottom:8px;">${t('welcomeClick')}</div>` +
     `<div style="font-size:12px;color:var(--gc-fg2);">${t('welcomeDrag')}</div>` +
