@@ -54,7 +54,7 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   const boardTextGroup = renderBoard(data.board, boardGroup, style);
 
   // Render routes
-  const { layerGroups: routeLayerGroups, viaPadGroups, viaDrillGroup, labelsGroup, routeTextGroup } = renderRoutes(data.routes, data.pads, style, data.padstacks);
+  const { layerGroups: routeLayerGroups, viaPadGroups, viaDrillGroup, labelGroups, routeTextGroup } = renderRoutes(data.routes, data.pads, style, data.padstacks);
 
   // Render components
   const { compGroup, padGroups, padLabelGroups, silkOutlineGroups, silkTextGroups, valueTextGroups, thDrillGroup } = renderComponents(
@@ -77,6 +77,10 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   const botRoute = routeLayerGroups.get('BOTTOM');
   if (botRoute) { routesBottom.add(botRoute); layers.set('ROUTE_BOTTOM', botRoute); }
   leafer.add(routesBottom);
+
+  // Bottom route labels (after bottom routes, before bottom pads)
+  const botLabels = labelGroups.get('BOTTOM');
+  if (botLabels) { layers.set('LABELS_BOTTOM', botLabels); leafer.add(botLabels); }
 
   // 3. Bottom pads
   const padsBottom = padGroups.get('BOTTOM');
@@ -106,9 +110,12 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   }
   leafer.add(routeContainer);
 
-  // Inner pads + inner pad labels
+  // Inner pads + inner pad labels + inner route labels
   const innerPadKeys = [...padGroups.keys()].filter(k => k.startsWith('INNER')).sort();
   for (const key of innerPadKeys) {
+    // Inner route labels for this layer
+    const innerLbl = labelGroups.get(key);
+    if (innerLbl) { layers.set(`LABELS_${key}`, innerLbl); leafer.add(innerLbl); }
     const pg = padGroups.get(key)!;
     layers.set(`PADS_${key}`, pg);
     leafer.add(pg);
@@ -122,6 +129,10 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   const topRoute = routeLayerGroups.get('TOP');
   if (topRoute) { routesTop.add(topRoute); layers.set('ROUTE_TOP', topRoute); }
   leafer.add(routesTop);
+
+  // Top route labels (after top routes, before top pads)
+  const topLabels = labelGroups.get('TOP');
+  if (topLabels) { layers.set('LABELS_TOP', topLabels); leafer.add(topLabels); }
 
   // 7. Top pads
   const padsTop = padGroups.get('TOP');
@@ -159,15 +170,11 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   layers.set('VIA_DRILLS', viaDrillGroup);
   leafer.add(viaDrillGroup);
 
-  // 10. Labels (frontmost, above drills)
-  // Route texts
+  // 10. Route texts (frontmost, above drills)
   if (routeTextGroup.children && routeTextGroup.children.length > 0) {
     layers.set('ROUTE_TEXTS', routeTextGroup);
     leafer.add(routeTextGroup);
   }
-
-  layers.set('LABELS', labelsGroup);
-  leafer.add(labelsGroup);
 
   // Fit view to board bounds
   const pad = Math.max(bw, bh) * 0.05;

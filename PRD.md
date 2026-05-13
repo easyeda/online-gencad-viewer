@@ -77,6 +77,7 @@ Online GenCAD Viewer 是一个纯前端的在线 PCB 文件查看器，支持解
 | 1.5 | BOARD_TEXTS | 板框文本（BOARD 段 TEXT） |
 | 2 | ROUTES_BOTTOM | 底层走线容器 |
 | 3 | ROUTE_BOTTOM | 底层走线 |
+| 3.5 | LABELS_BOTTOM | 底层导线网络名标签 |
 | 4 | PADS_BOTTOM | 底层焊盘（含 TH 焊盘的底层部分） |
 | 4.5 | PAD_LABELS_BOTTOM | 底层焊盘网络名标签 |
 | 5 | SILK_OUTLINE_BOTTOM | 底层丝印轮廓（含 ARTWORK 图元） |
@@ -84,10 +85,12 @@ Online GenCAD Viewer 是一个纯前端的在线 PCB 文件查看器，支持解
 | 7 | VALUE_TEXT_BOTTOM | 底层值文本 |
 | 8 | ROUTES | 内层走线容器 |
 | 9 | ROUTE_INNER-n | 内层走线 |
+| 9.5 | LABELS_INNER-n | 内层导线网络名标签 |
 | 10 | PADS_INNER-n | 内层焊盘（含 TH 焊盘的内层部分） |
 | 10.5 | PAD_LABELS_INNER-n | 内层焊盘网络名标签 |
 | 11 | ROUTES_TOP | 顶层走线容器 |
 | 12 | ROUTE_TOP | 顶层走线 |
+| 12.5 | LABELS_TOP | 顶层导线网络名标签 |
 | 13 | PADS_TOP | 顶层焊盘（含 TH 焊盘的顶层部分） |
 | 13.5 | PAD_LABELS_TOP | 顶层焊盘网络名标签 |
 | 14 | COMPONENTS | 元件轮廓组 |
@@ -95,10 +98,9 @@ Online GenCAD Viewer 是一个纯前端的在线 PCB 文件查看器，支持解
 | 16 | SILK_TEXT_TOP | 顶层丝印文本（位号，含 ARTWORK 文本） |
 | 17 | VALUE_TEXT_TOP | 顶层值文本 |
 | 18 | TH_DRILLS | 通孔钻孔 |
-| 19 | VIAS_TOP / VIAS_BOTTOM / VIAS_INNER-n | 过孔焊盘（按层分组，跟随层可见性） |
+| 19 | VIAS_TOP / VIAS_BOTTOM / VIAS_INNER-n | 过孔焊盘（按层分组，BOTTOM→INNER→TOP 排序） |
 | 20 | VIA_DRILLS | 过孔钻孔 |
 | 20.5 | ROUTE_TEXTS | 走线文本（ROUTES 段 TEXT） |
-| 21 | LABELS | 导线网络名标签（按层穿插，非顶层） |
 
 ### 2.6 焊盘层分配规则
 
@@ -152,7 +154,7 @@ Online GenCAD Viewer 是一个纯前端的在线 PCB 文件查看器，支持解
 | 元件 | SILK_OUTLINE_*, PADS_*, TH_DRILLS |
 | 位号 | SILK_TEXT_TOP, SILK_TEXT_BOTTOM |
 | 值 | VALUE_TEXT_TOP, VALUE_TEXT_BOTTOM |
-| 网络名 | LABELS, PAD_LABELS_TOP, PAD_LABELS_BOTTOM, PAD_LABELS_INNER-* |
+| 网络名 | LABELS_TOP, LABELS_BOTTOM, LABELS_INNER-*, PAD_LABELS_TOP, PAD_LABELS_BOTTOM, PAD_LABELS_INNER-* |
 | 文本 | BOARD_TEXTS, ROUTE_TEXTS |
 | 焊盘 | PADS_TOP, PADS_BOTTOM, PADS_INNER-* |
 | 钻孔层 | TH_DRILLS, VIA_DRILLS |

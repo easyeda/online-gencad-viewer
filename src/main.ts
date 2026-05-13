@@ -186,11 +186,9 @@ function highlightComponent(name: string) {
       dimGroup(g);
     } else if (key.startsWith('ROUTE') || key === 'ROUTES_BOTTOM' || key === 'ROUTES' || key === 'ROUTES_TOP') {
       dimGroup(g);
-    } else if (key === 'VIA_DRILLS' || key === 'VIAS') {
+    } else if (key === 'VIA_DRILLS' || key.startsWith('VIAS_')) {
       dimGroup(g);
-    } else if (key === 'LABELS') {
-      dimGroup(g);
-    } else if (key.startsWith('PAD_LABELS_') || key === 'BOARD_TEXTS' || key === 'ROUTE_TEXTS') {
+    } else if (key.startsWith('LABELS_') || key.startsWith('PAD_LABELS_') || key === 'BOARD_TEXTS' || key === 'ROUTE_TEXTS') {
       dimGroup(g);
     } else {
       dimGroup(g);
@@ -242,8 +240,8 @@ function highlightNet(signalName: string) {
         const pinKey = `${node._component}.${node._pin}`;
         return connectedPins.has(pinKey);
       });
-    } else if (key === 'LABELS') {
-      // keep labels visible
+    } else if (key.startsWith('LABELS_')) {
+      // keep route net name labels visible
     } else if (key.startsWith('PAD_LABELS_') || key === 'BOARD_TEXTS' || key === 'ROUTE_TEXTS') {
       dimGroup(g);
     } else {
