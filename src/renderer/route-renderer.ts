@@ -66,24 +66,32 @@ export function renderRoutes(
       const targetGroup = layerGroups.get(seg.layer);
       if (targetGroup) targetGroup.add(segGroup);
 
-      // Add net name label on longest LINE segment
-      const lines = seg.primitives.filter(p => p.type === 'LINE') as { type: 'LINE'; x1: number; y1: number; x2: number; y2: number }[];
-      if (lines.length > 0 && route.signalName) {
-        let longest = lines[0];
-        let maxLen = 0;
-        for (const l of lines) {
-          const len = Math.sqrt((l.x2 - l.x1) ** 2 + (l.y2 - l.y1) ** 2);
-          if (len > maxLen) { maxLen = len; longest = l; }
+      // Add net name label on longest primitive
+      if (seg.primitives.length > 0 && route.signalName) {
+        let cx = 0, cy = 0, angle = 0;
+        const lines = seg.primitives.filter(p => p.type === 'LINE') as { type: 'LINE'; x1: number; y1: number; x2: number; y2: number }[];
+        if (lines.length > 0) {
+          let longest = lines[0], maxLen = 0;
+          for (const l of lines) {
+            const len = Math.sqrt((l.x2 - l.x1) ** 2 + (l.y2 - l.y1) ** 2);
+            if (len > maxLen) { maxLen = len; longest = l; }
+          }
+          cx = (longest.x1 + longest.x2) / 2;
+          cy = -(longest.y1 + longest.y2) / 2;
+          angle = Math.atan2(-(longest.y2 - longest.y1), longest.x2 - longest.x1) * 180 / Math.PI;
+        } else {
+          // No LINE — use first primitive center
+          const p = seg.primitives[0];
+          if (p.type === 'ARC') { cx = (p.xs + p.xe) / 2; cy = -(p.ys + p.ye) / 2; }
+          else if (p.type === 'CIRCLE') { cx = p.xc; cy = -p.yc; }
+          else if (p.type === 'RECTANGLE') { cx = p.x + p.w / 2; cy = -(p.y + p.h / 2); }
         }
-        const mx = (longest.x1 + longest.x2) / 2;
-        const my = -(longest.y1 + longest.y2) / 2;
-        let angle = Math.atan2(-(longest.y2 - longest.y1), longest.x2 - longest.x1) * 180 / Math.PI;
         if (angle > 90) angle -= 180;
         else if (angle < -90) angle += 180;
         const fontSize = Math.min(trackSw, Math.max(trackSw * 0.95, sw * 3));
         const textEl = new Text({
-          x: mx,
-          y: my,
+          x: cx,
+          y: cy,
           text: route.signalName,
           fontSize,
           fill: '#ffffff',
