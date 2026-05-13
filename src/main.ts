@@ -190,7 +190,7 @@ function highlightComponent(name: string) {
       dimGroup(g);
     } else if (key === 'LABELS') {
       dimGroup(g);
-    } else if (key === 'PAD_LABELS' || key === 'BOARD_TEXTS' || key === 'ROUTE_TEXTS') {
+    } else if (key.startsWith('PAD_LABELS_') || key === 'BOARD_TEXTS' || key === 'ROUTE_TEXTS') {
       dimGroup(g);
     } else {
       dimGroup(g);
@@ -244,7 +244,7 @@ function highlightNet(signalName: string) {
       });
     } else if (key === 'LABELS') {
       // keep labels visible
-    } else if (key === 'PAD_LABELS' || key === 'BOARD_TEXTS' || key === 'ROUTE_TEXTS') {
+    } else if (key.startsWith('PAD_LABELS_') || key === 'BOARD_TEXTS' || key === 'ROUTE_TEXTS') {
       dimGroup(g);
     } else {
       dimGroup(g);

@@ -6,11 +6,11 @@ import { getLayerColor } from './colors';
 export interface ComponentRenderResult {
   compGroup: Group;
   padGroups: Map<string, Group>;
+  padLabelGroups: Map<string, Group>;
   silkOutlineGroups: Map<string, Group>;
   silkTextGroups: Map<string, Group>;
   valueTextGroups: Map<string, Group>;
   thDrillGroup: Group;
-  padLabelsGroup: Group;
 }
 
 export function renderComponents(
@@ -35,7 +35,7 @@ export function renderComponents(
   }
 
   const thDrillGroup = new Group();
-  const padLabelsGroup = new Group();
+  const padLabelGroups = new Map<string, Group>();
   const padGroups = new Map<string, Group>();
   const silkOutlineGroups = new Map<string, Group>();
   const silkTextGroups = new Map<string, Group>();
@@ -49,6 +49,14 @@ export function renderComponents(
       padGroups.set(layer, pg);
     }
     return padGroups.get(layer)!;
+  }
+
+  function getPadLabelGroup(layer: string): Group {
+    if (!padLabelGroups.has(layer)) {
+      const lg = new Group();
+      padLabelGroups.set(layer, lg);
+    }
+    return padLabelGroups.get(layer)!;
   }
 
   function getSilkOutlineGroup(layer: string): Group {
@@ -272,7 +280,7 @@ export function renderComponents(
                 verticalAlign: 'middle',
                 rotation: lblRot,
               });
-              padLabelsGroup.add(lbl);
+              getPadLabelGroup(layerName).add(lbl);
             }
           }
         }
@@ -380,7 +388,7 @@ export function renderComponents(
             verticalAlign: 'middle',
             rotation: lblRot,
           });
-          padLabelsGroup.add(lbl);
+          getPadLabelGroup(comp.layer).add(lbl);
         }
 
         // SMD pin may still have a drill (e.g. connectors marked as SMD)
@@ -488,7 +496,7 @@ export function renderComponents(
     getSilkTextGroup(silkLayer).add(rfg);
   }
 
-  return { compGroup, padGroups, silkOutlineGroups, silkTextGroups, valueTextGroups, thDrillGroup, padLabelsGroup };
+  return { compGroup, padGroups, padLabelGroups, silkOutlineGroups, silkTextGroups, valueTextGroups, thDrillGroup };
 }
 
 function computeShapeBBox(shape: ShapeDef): { minX: number; minY: number; maxX: number; maxY: number } {

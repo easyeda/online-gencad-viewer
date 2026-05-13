@@ -78,24 +78,27 @@ Online GenCAD Viewer 是一个纯前端的在线 PCB 文件查看器，支持解
 | 2 | ROUTES_BOTTOM | 底层走线容器 |
 | 3 | ROUTE_BOTTOM | 底层走线 |
 | 4 | PADS_BOTTOM | 底层焊盘（含 TH 焊盘的底层部分） |
-| 5 | SILK_OUTLINE_BOTTOM | 底层丝印轮廓 |
-| 6 | SILK_TEXT_BOTTOM | 底层丝印文本（位号） |
+| 4.5 | PAD_LABELS_BOTTOM | 底层焊盘网络名标签 |
+| 5 | SILK_OUTLINE_BOTTOM | 底层丝印轮廓（含 ARTWORK 图元） |
+| 6 | SILK_TEXT_BOTTOM | 底层丝印文本（位号，含 ARTWORK 文本） |
 | 7 | VALUE_TEXT_BOTTOM | 底层值文本 |
 | 8 | ROUTES | 内层走线容器 |
 | 9 | ROUTE_INNER-n | 内层走线 |
 | 10 | PADS_INNER-n | 内层焊盘（含 TH 焊盘的内层部分） |
+| 10.5 | PAD_LABELS_INNER-n | 内层焊盘网络名标签 |
 | 11 | ROUTES_TOP | 顶层走线容器 |
 | 12 | ROUTE_TOP | 顶层走线 |
 | 13 | PADS_TOP | 顶层焊盘（含 TH 焊盘的顶层部分） |
+| 13.5 | PAD_LABELS_TOP | 顶层焊盘网络名标签 |
 | 14 | COMPONENTS | 元件轮廓组 |
-| 15 | SILK_OUTLINE_TOP | 顶层丝印轮廓 |
-| 16 | SILK_TEXT_TOP | 顶层丝印文本（位号） |
+| 15 | SILK_OUTLINE_TOP | 顶层丝印轮廓（含 ARTWORK 图元） |
+| 16 | SILK_TEXT_TOP | 顶层丝印文本（位号，含 ARTWORK 文本） |
 | 17 | VALUE_TEXT_TOP | 顶层值文本 |
 | 18 | TH_DRILLS | 通孔钻孔 |
 | 19 | VIAS_TOP / VIAS_BOTTOM / VIAS_INNER-n | 过孔焊盘（按层分组，跟随层可见性） |
 | 20 | VIA_DRILLS | 过孔钻孔 |
 | 20.5 | ROUTE_TEXTS | 走线文本（ROUTES 段 TEXT） |
-| 21 | LABELS | 网络名标签 |
+| 21 | LABELS | 导线网络名标签（按层穿插，非顶层） |
 
 ### 2.6 焊盘层分配规则
 
@@ -149,7 +152,7 @@ Online GenCAD Viewer 是一个纯前端的在线 PCB 文件查看器，支持解
 | 元件 | SILK_OUTLINE_*, PADS_*, TH_DRILLS |
 | 位号 | SILK_TEXT_TOP, SILK_TEXT_BOTTOM |
 | 值 | VALUE_TEXT_TOP, VALUE_TEXT_BOTTOM |
-| 网络名 | LABELS |
+| 网络名 | LABELS, PAD_LABELS_TOP, PAD_LABELS_BOTTOM, PAD_LABELS_INNER-* |
 | 文本 | BOARD_TEXTS, ROUTE_TEXTS |
 | 焊盘 | PADS_TOP, PADS_BOTTOM, PADS_INNER-* |
 | 钻孔层 | TH_DRILLS, VIA_DRILLS |
@@ -198,7 +201,7 @@ Online GenCAD Viewer 是一个纯前端的在线 PCB 文件查看器，支持解
 - 颜色按层分配（colors.ts 定义）
 - 圆弧走线使用 SVG Arc path（`arcSVGSegment`），strokeCap: 'round'
 - GenCAD CCW 弧在 Y-down 坐标系中变为 CW → SVG sweep-flag = 0
-- 网络名标签：白色，字体高度为导线宽度的 95%，居中显示在最长线段上
+- 网络名标签：白色，字体高度��导线宽度的 95%（最小 `sw*3`），居中显示在最长线段上
 - 标签仅在线段长度足够容纳文本时显示
 
 ### 4.2 焊盘
@@ -209,7 +212,8 @@ Online GenCAD Viewer 是一个纯前端的在线 PCB 文件查看器，支持解
   - RECTANGLE → LeaferJS Rect
   - 组合图元 → LeaferJS Path（`primitivesToPath` 合并路径，evenodd 填充）
 - 颜色按所在层分配
-- 焊盘标签：白色，显示 `引脚名:网络名`，字体自适应焊盘尺寸（`padSize * 0.8`）
+- 焊盘标签：白色，显示 `引脚名:网络名`，字体自适应焊盘尺寸（最小 `padSize*0.3`）
+- 标签按焊盘所在层分组（PAD_LABELS_TOP/BOTTOM/INNER-*），穿插在对应焊盘层之后（`padSize * 0.8`）
 - 标签旋转跟随焊盘方向
 
 ### 4.3 过孔

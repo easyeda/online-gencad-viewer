@@ -57,7 +57,7 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   const { layerGroups: routeLayerGroups, viaPadGroups, viaDrillGroup, labelsGroup, routeTextGroup } = renderRoutes(data.routes, data.pads, style, data.padstacks);
 
   // Render components
-  const { compGroup, padGroups, silkOutlineGroups, silkTextGroups, valueTextGroups, thDrillGroup, padLabelsGroup } = renderComponents(
+  const { compGroup, padGroups, padLabelGroups, silkOutlineGroups, silkTextGroups, valueTextGroups, thDrillGroup } = renderComponents(
     data.components, data.shapes, data.pads, data.padstacks, style, data.signals, data.artworks
   );
 
@@ -82,6 +82,10 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   const padsBottom = padGroups.get('BOTTOM');
   if (padsBottom) { layers.set('PADS_BOTTOM', padsBottom); leafer.add(padsBottom); }
 
+  // Bottom pad labels (after bottom pads, before bottom silkscreen)
+  const padLabelsBottom = padLabelGroups.get('BOTTOM');
+  if (padLabelsBottom) { layers.set('PAD_LABELS_BOTTOM', padLabelsBottom); leafer.add(padLabelsBottom); }
+
   // 4. Bottom silkscreen
   const silkOutlineBottom = silkOutlineGroups.get('SILKSCREEN_BOTTOM');
   if (silkOutlineBottom) { layers.set('SILK_OUTLINE_BOTTOM', silkOutlineBottom); leafer.add(silkOutlineBottom); }
@@ -102,12 +106,14 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   }
   leafer.add(routeContainer);
 
-  // Inner pads
+  // Inner pads + inner pad labels
   const innerPadKeys = [...padGroups.keys()].filter(k => k.startsWith('INNER')).sort();
   for (const key of innerPadKeys) {
     const pg = padGroups.get(key)!;
     layers.set(`PADS_${key}`, pg);
     leafer.add(pg);
+    const plg = padLabelGroups.get(key);
+    if (plg) { layers.set(`PAD_LABELS_${key}`, plg); leafer.add(plg); }
   }
 
   // 6. Top routes
@@ -120,6 +126,10 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   // 7. Top pads
   const padsTop = padGroups.get('TOP');
   if (padsTop) { layers.set('PADS_TOP', padsTop); leafer.add(padsTop); }
+
+  // Top pad labels (after top pads, before silkscreen)
+  const padLabelsTop = padLabelGroups.get('TOP');
+  if (padLabelsTop) { layers.set('PAD_LABELS_TOP', padLabelsTop); leafer.add(padLabelsTop); }
 
   // Component outlines
   layers.set('COMPONENTS', compGroup);
@@ -157,10 +167,6 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
 
   layers.set('LABELS', labelsGroup);
   leafer.add(labelsGroup);
-
-  // Pad labels (pin net names)
-  layers.set('PAD_LABELS', padLabelsGroup);
-  leafer.add(padLabelsGroup);
 
   // Fit view to board bounds
   const pad = Math.max(bw, bh) * 0.05;

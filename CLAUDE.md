@@ -16,7 +16,7 @@ This is a browser-based viewer for GenCAD files (an EDA board interchange format
 
 ### Data flow
 
-1. **Parser** (`src/parser/`) — reads GenCAD text into a `GenCADData` structure (types in `parser/types.ts`). Handles sections: HEADER, BOARD, PADS, PADSTACKS, ARTWORKS, SHAPES, COMPONENTS, DEVICES, SIGNALS, TRACKS, ROUTES.
+1. **Parser** (`src/parser/`) — reads GenCAD text into a `GenCADData` structure (types in `parser/types.ts`). Handles sections: HEADER, BOARD, PADS, PADSTACKS, ARTWORKS, SHAPES, COMPONENTS, DEVICES, SIGNALS, TRACKS, ROUTES. TEXT entries parsed in ARTWORKS, BOARD, COMPONENTS, ROUTES (shared `GenCADText` type).
 2. **Renderer** (`src/renderer/`) — converts parsed data into LeaferJS scene graph elements (Group, Line, Path, Ellipse, Rect, Text). Split into `board-renderer`, `route-renderer`, `component-renderer`, `colors`, and shared `primitives` helpers. Y coordinates are negated during rendering (`canvasY = -genCADY`).
 3. **UI** (`src/ui/`) — layout shell, file picker (drag-and-drop + button), layer/filter controls, left panel (component/net lists with search), and property panel.
 4. **Main** (`src/main.ts`) — orchestrates loading, wires UI events, manages highlight/dim state for component and net selection. Viewport (zoom/pan) uses LeaferJS built-in zoomLayer.
@@ -25,11 +25,18 @@ This is a browser-based viewer for GenCAD files (an EDA board interchange format
 
 GenCAD uses Y-up coordinates. The renderer negates Y during element creation (`y = -genCADY`). Rotation angles are also negated (`rotation = -genCADRot`). Text rotation follows the same rule.
 
+### Layer stacking order (back → front)
+
+BOARD → BOARD_TEXTS → ROUTES_BOTTOM → PADS_BOTTOM → PAD_LABELS_BOTTOM → SILK_OUTLINE_BOTTOM → SILK_TEXT_BOTTOM → VALUE_TEXT_BOTTOM → ROUTES (inner) → PADS_INNER → PAD_LABELS_INNER → ROUTES_TOP → PADS_TOP → PAD_LABELS_TOP → COMPONENTS → SILK_OUTLINE_TOP → SILK_TEXT_TOP → VALUE_TEXT_TOP → TH_DRILLS → VIAS_* → VIA_DRILLS → ROUTE_TEXTS → LABELS
+
+Key: pad labels are per-layer (PAD_LABELS_TOP/BOTTOM/INNER-*), interleaved with their respective pad layers.
+
 ### Key conventions
 
 - LeaferJS elements use custom properties (`_component`, `_signal`, `_pin`, `_padLayer`) for identification in highlight/interaction logic.
 - The UI supports Chinese/English via a simple `t()` translation function in `ui/layout.ts`.
-- Runtime dependency: `leafer-ui` (with `@leafer-in/view` and `@leafer-in/viewport` for zoom/pan).
+- Runtime dependency: `leafer-ui` (with `@leafer-in/view` for zoom).
 - `forceSyncRender()`: set `renderer.totalTimes = 0` then call `renderer.render()` to force immediate Canvas redraw after opacity changes.
-- Layer groups are stored in a `Map<string, Group>` keyed by layer names (e.g., `BOARD`, `ROUTES_TOP`, `PADS_BOTTOM`, `VIAS_TOP`, `LABELS`).
-- Global styles are in `src/style.css` (imported by main.ts), not in index.html inline `<style>`.
+- Layer groups stored in `Map<string, Group>` keyed by names like `BOARD`, `ROUTE_TOP`, `PADS_BOTTOM`, `PAD_LABELS_TOP`, `VIAS_TOP`, `LABELS`.
+- ARTWORKS section: parsed with primitives + texts, rendered when referenced by SHAPES or COMPONENTS. Artwork graphics go to silk outline groups, artwork text rendered with layer color.
+- Global styles in `src/style.css` (imported by main.ts), not in index.html inline `<style>`.
