@@ -186,6 +186,7 @@ export interface ArtworkDef {
   name: string;
   layer: string;
   primitives: GenCADPrimitive[];
+  texts: GenCADText[];
   filled: boolean;
   attributes: Record<string, string>;
 }

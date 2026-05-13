@@ -1,4 +1,4 @@
-import type { ComponentDef, ShapeDef, PadDef, PadstackDef, SignalDef, RenderStyle, GenCADPrimitive } from '../parser/types';
+import type { ComponentDef, ShapeDef, PadDef, PadstackDef, SignalDef, RenderStyle, GenCADPrimitive, ArtworkDef } from '../parser/types';
 import { Group, Ellipse, Text } from 'leafer-ui';
 import { primitiveToUI, primitivesToPath } from './primitives';
 import { getLayerColor } from './colors';
@@ -19,7 +19,8 @@ export function renderComponents(
   pads: Map<string, PadDef>,
   padstacks: Map<string, PadstackDef>,
   style: RenderStyle,
-  signals?: Map<string, SignalDef>
+  signals?: Map<string, SignalDef>,
+  artworks?: Map<string, ArtworkDef>
 ): ComponentRenderResult {
   const compGroup = new Group();
   const sw = style.lineWidth;
@@ -113,6 +114,86 @@ export function renderComponents(
       });
       oWrap.add(el);
       getSilkOutlineGroup(silkLayer).add(oWrap);
+    }
+
+    // Shape artwork references
+    for (const awRef of shape.artworks) {
+      const aw = artworks?.get(awRef.artworkName);
+      if (!aw) continue;
+      const awLayer = aw.layer || silkLayer;
+      const awColor = getLayerColor(awLayer);
+      const awWrap = new Group({
+        x: cx,
+        y: cy,
+        rotation: rot,
+        scaleX: mirrorX ? -1 : 1,
+        scaleY: mirrorY ? -1 : 1,
+      });
+      const awInner = new Group({
+        x: awRef.x,
+        y: -awRef.y,
+        rotation: awRef.rot ? -awRef.rot : 0,
+        scaleX: awRef.mirror === 'MIRRORY' ? -1 : 1,
+        scaleY: awRef.mirror === 'MIRRORX' ? -1 : 1,
+      });
+      for (const p of aw.primitives) {
+        awInner.add(primitiveToUI(p, awColor, sw));
+      }
+      for (const txt of aw.texts) {
+        const txtEl = new Text({
+          x: txt.x,
+          y: -txt.y,
+          text: txt.str,
+          fontSize: txt.size,
+          fill: getLayerColor(txt.layer),
+          textAlign: 'center',
+          verticalAlign: 'middle',
+          rotation: txt.rot ? -txt.rot : 0,
+        });
+        awInner.add(txtEl);
+      }
+      awWrap.add(awInner);
+      getSilkOutlineGroup(awLayer).add(awWrap);
+    }
+
+    // Component-level artwork references
+    for (const awRef of comp.artworks) {
+      const aw = artworks?.get(awRef.artworkName);
+      if (!aw) continue;
+      const awLayer = aw.layer || silkLayer;
+      const awColor = getLayerColor(awLayer);
+      const awWrap = new Group({
+        x: cx,
+        y: cy,
+        rotation: rot,
+        scaleX: mirrorX ? -1 : 1,
+        scaleY: mirrorY ? -1 : 1,
+      });
+      const awInner = new Group({
+        x: awRef.x,
+        y: -awRef.y,
+        rotation: awRef.rot ? -awRef.rot : 0,
+        scaleX: awRef.mirror === 'MIRRORY' ? -1 : 1,
+        scaleY: awRef.mirror === 'MIRRORX' ? -1 : 1,
+      });
+      for (const p of aw.primitives) {
+        awInner.add(primitiveToUI(p, awColor, sw));
+      }
+      for (const txt of aw.texts) {
+        const txtEl = new Text({
+          x: txt.x,
+          y: -txt.y,
+          text: txt.str,
+          fontSize: txt.size,
+          fill: getLayerColor(txt.layer),
+          textAlign: 'center',
+          verticalAlign: 'middle',
+          rotation: txt.rot ? -txt.rot : 0,
+        });
+        awInner.add(txtEl);
+      }
+      awWrap.add(awInner);
+      getSilkOutlineGroup(awLayer).add(awWrap);
     }
 
     // Pins

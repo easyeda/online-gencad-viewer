@@ -135,7 +135,7 @@ export function parseGenCAD(text: string): GenCADData {
     // --- ARTWORKS ---
     if (section === 'ARTWORKS') {
       if (kw === 'ARTWORK' && a.length >= 1) {
-        curArtwork = { name: a[0], layer: '', primitives: [], filled: false, attributes: {} };
+        curArtwork = { name: a[0], layer: '', primitives: [], texts: [], filled: false, attributes: {} };
         data.artworks.set(curArtwork.name, curArtwork);
       } else if (curArtwork) {
         switch (kw) {
@@ -144,6 +144,9 @@ export function parseGenCAD(text: string): GenCADData {
           case 'TRACK': break; // skip track ref for now
           case 'LINE': case 'ARC': case 'CIRCLE': case 'RECTANGLE':
             addPrim(kw, a, curArtwork); break;
+          case 'TEXT':
+            if (a.length >= 7) curArtwork.texts.push({ x: +a[0], y: +a[1], size: +a[2], rot: +a[3], mirror: a[4], layer: a[5], str: a[6], bw: +(a[7] ?? 0), bh: +(a[8] ?? 0), bx: +(a[9] ?? 0), by: +(a[10] ?? 0) });
+            break;
           case 'ATTRIBUTE':
             if (a.length >= 2) curArtwork.attributes[a[0]] = a.slice(1).join(' '); break;
         }

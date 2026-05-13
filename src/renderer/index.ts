@@ -58,7 +58,7 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
 
   // Render components
   const { compGroup, padGroups, silkOutlineGroups, silkTextGroups, valueTextGroups, thDrillGroup, padLabelsGroup } = renderComponents(
-    data.components, data.shapes, data.pads, data.padstacks, style, data.signals
+    data.components, data.shapes, data.pads, data.padstacks, style, data.signals, data.artworks
   );
 
   // Assemble in visual stacking order (back → front)
