@@ -80,7 +80,7 @@ export function renderRoutes(
         let angle = Math.atan2(-(longest.y2 - longest.y1), longest.x2 - longest.x1) * 180 / Math.PI;
         if (angle > 90) angle -= 180;
         else if (angle < -90) angle += 180;
-        const fontSize = Math.max(trackSw * 0.95, sw * 3);
+        const fontSize = Math.min(trackSw, Math.max(trackSw * 0.95, sw * 3));
         const textEl = new Text({
           x: mx,
           y: my,
