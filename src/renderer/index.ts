@@ -1,6 +1,7 @@
 import type { GenCADData, RenderStyle } from '../parser/types';
 import { Leafer, Group } from 'leafer-ui';
 import '@leafer-in/view';
+import { addViewport, addViewportConfig } from '@leafer-in/viewport';
 import { renderBoard } from './board-renderer';
 import { renderRoutes } from './route-renderer';
 import { renderComponents } from './component-renderer';
@@ -18,6 +19,13 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
     view: container,
     fill: '#1a1a2e',
     type: 'design',
+  });
+
+  // Enable viewport optimization for better zoom/pan performance
+  addViewportConfig(leafer, {
+    wheel: { preventDefault: false },
+    pointer: { preventDefaultMenu: true },
+    zoom: { min: 0.01, max: 256 },
   });
 
   // Compute board bbox for adaptive sizing
