@@ -74,6 +74,7 @@ Online GenCAD Viewer 是一个纯前端的在线 PCB 文件查看器，支持解
 | 序号 | 图层 Key | 说明 |
 |------|----------|------|
 | 1 | BOARD | 板框 |
+| 1.5 | BOARD_TEXTS | 板框文本（BOARD 段 TEXT） |
 | 2 | ROUTES_BOTTOM | 底层走线容器 |
 | 3 | ROUTE_BOTTOM | 底层走线 |
 | 4 | PADS_BOTTOM | 底层焊盘（含 TH 焊盘的底层部分） |
@@ -93,6 +94,7 @@ Online GenCAD Viewer 是一个纯前端的在线 PCB 文件查看器，支持解
 | 18 | TH_DRILLS | 通孔钻孔 |
 | 19 | VIAS_TOP / VIAS_BOTTOM / VIAS_INNER-n | 过孔焊盘（按层分组，跟随层可见性） |
 | 20 | VIA_DRILLS | 过孔钻孔 |
+| 20.5 | ROUTE_TEXTS | 走线文本（ROUTES 段 TEXT） |
 | 21 | LABELS | 网络名标签 |
 
 ### 2.6 焊盘层分配规则
@@ -148,6 +150,7 @@ Online GenCAD Viewer 是一个纯前端的在线 PCB 文件查看器，支持解
 | 位号 | SILK_TEXT_TOP, SILK_TEXT_BOTTOM |
 | 值 | VALUE_TEXT_TOP, VALUE_TEXT_BOTTOM |
 | 网络名 | LABELS |
+| 文本 | BOARD_TEXTS, ROUTE_TEXTS |
 | 焊盘 | PADS_TOP, PADS_BOTTOM, PADS_INNER-* |
 | 钻孔层 | TH_DRILLS, VIA_DRILLS |
 

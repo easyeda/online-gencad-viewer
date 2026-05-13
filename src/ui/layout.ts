@@ -17,6 +17,7 @@ const T: Record<Lang, Record<string, string>> = {
     propNodeCount: '节点数', propNodes: '节点', propElement: '元素',
     allLayers: '全部图层',
     pads: '焊盘', drills: '钻孔层',
+    text: '文本',
     about: '关于', aboutAuthor: '作者', aboutRepo: '仓库', aboutVersion: '版本', aboutBuildDate: '编译日期', aboutEngine: '渲染引擎', aboutDesc: '在线 GenCAD 查看器，支持多层布局、走线、焊盘、过孔、丝印等元素的交互式可视化展示。',
     welcomeTitle: 'Online GenCAD Viewer',
     welcomeDesc: '在线 GenCAD 查看器，方便查看 PCB 的布局与走线',
@@ -36,6 +37,7 @@ const T: Record<Lang, Record<string, string>> = {
     propNodeCount: 'Node Count', propNodes: 'Nodes', propElement: 'Element',
     allLayers: 'All Layers',
     pads: 'Pads', drills: 'Drills',
+    text: 'Text',
     about: 'About', aboutAuthor: 'Author', aboutRepo: 'Repository', aboutVersion: 'Version', aboutBuildDate: 'Build Date', aboutEngine: 'Render Engine', aboutDesc: 'Online GenCAD viewer with interactive multi-layer visualization for PCB layout, routing, pads, vias, and silkscreen.',
     welcomeTitle: 'Online GenCAD Viewer',
     welcomeDesc: 'Online GenCAD viewer for PCB layout and routing',
@@ -126,17 +128,38 @@ export function createLayout(): LayoutRefs {
   aboutBtn.style.cssText += 'width:28px;text-align:center;padding:4px 0;font-size:14px;border-radius:50%;';
 
   const aboutDrop = document.createElement('div');
-  aboutDrop.style.cssText = 'display:none;position:absolute;top:100%;right:0;margin-top:4px;background:var(--gc-bg2);border:1px solid var(--gc-border2);border-radius:6px;padding:16px 20px;min-width:320px;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,0.4);font-size:12px;color:var(--gc-fg);line-height:1.8;';
+  aboutDrop.style.cssText = 'display:none;position:absolute;top:100%;right:0;margin-top:4px;background:var(--gc-bg2);border:1px solid var(--gc-border2);border-radius:8px;padding:20px 24px;min-width:400px;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,0.5);font-size:12px;color:var(--gc-fg);line-height:1.8;';
 
   function renderAbout() {
     aboutDrop.innerHTML =
-      `<div style="font-size:15px;font-weight:600;margin-bottom:8px;color:var(--gc-fg);">Online GenCAD Viewer</div>` +
-      `<div style="font-size:11px;color:var(--gc-fg2);margin-bottom:10px;line-height:1.6;">${t('aboutDesc')}</div>` +
-      `<div><span style="color:var(--gc-fg2)">${t('aboutAuthor')}:</span> <a href="https://easyeda.com" target="_blank" rel="noopener" style="color:var(--gc-accent-b);text-decoration:none;">EasyEDA</a></div>` +
-      `<div><span style="color:var(--gc-fg2)">${t('aboutEngine')}:</span> <a href="https://www.leaferjs.com" target="_blank" rel="noopener" style="color:var(--gc-accent-b);text-decoration:none;">LeaferJS</a></div>` +
-      `<div><span style="color:var(--gc-fg2)">${t('aboutVersion')}:</span> ${__VERSION__}</div>` +
-      `<div><span style="color:var(--gc-fg2)">${t('aboutBuildDate')}:</span> ${__BUILD_DATE__}</div>` +
-      `<div style="margin-top:6px;"><span style="color:var(--gc-fg2)">${t('aboutRepo')}:</span> <a href="https://github.com/easyeda/online-gencad-viewer" target="_blank" rel="noopener" style="color:var(--gc-accent-b);text-decoration:none;word-break:break-all;">github.com/easyeda/online-gencad-viewer</a></div>`;
+      `<div style="font-size:16px;font-weight:600;margin-bottom:4px;color:var(--gc-fg);">Online GenCAD Viewer</div>` +
+      `<div style="font-size:11px;color:var(--gc-fg2);margin-bottom:12px;line-height:1.6;">${t('aboutDesc')}</div>` +
+      `<div style="border-top:1px solid var(--gc-border);margin:10px 0;padding-top:10px;">` +
+        `<div style="font-size:12px;font-weight:500;margin-bottom:6px;color:var(--gc-fg);">${currentLang === 'zh' ? '功能特性' : 'Features'}</div>` +
+        `<div style="font-size:11px;color:var(--gc-fg2);line-height:1.7;">` +
+          (currentLang === 'zh'
+            ? `&#8226; 多层 PCB 布局与走线可视化<br>&#8226; 焊盘、过孔、丝印、钻孔渲染<br>&#8226; 鼠标滚轮缩放与拖拽平移<br>&#8226; 图层显示控制与图元过滤<br>&#8226; 元件与网络交互式高亮<br>&#8226; 属性面板实时查看<br>&#8226; 拖拽或点击加载 .cad 文件<br>&#8226; 中英文界面切换`
+            : `&#8226; Multi-layer PCB layout &amp; routing visualization<br>&#8226; Pads, vias, silkscreen &amp; drill rendering<br>&#8226; Scroll zoom &amp; drag pan<br>&#8226; Layer visibility &amp; element filter controls<br>&#8226; Interactive component &amp; net highlighting<br>&#8226; Real-time property panel<br>&#8226; Drag-drop or click to load .cad files<br>&#8226; Chinese/English UI toggle`
+          ) +
+        `</div>` +
+      `</div>` +
+      `<div style="border-top:1px solid var(--gc-border);margin:10px 0;padding-top:10px;">` +
+        `<div style="font-size:12px;font-weight:500;margin-bottom:6px;color:var(--gc-fg);">${currentLang === 'zh' ? '技术栈' : 'Tech Stack'}</div>` +
+        `<div style="font-size:11px;color:var(--gc-fg2);">` +
+          `Canvas: <a href="https://www.leaferjs.com" target="_blank" rel="noopener" style="color:var(--gc-accent-b);text-decoration:none;">LeaferJS</a> &nbsp;|&nbsp; ` +
+          `Build: <a href="https://vitejs.dev" target="_blank" rel="noopener" style="color:var(--gc-accent-b);text-decoration:none;">Vite</a> &nbsp;|&nbsp; ` +
+          `Lang: TypeScript &nbsp;|&nbsp; ` +
+          `${currentLang === 'zh' ? '单文件' : 'Single-file'} HTML` +
+        `</div>` +
+      `</div>` +
+      `<div style="border-top:1px solid var(--gc-border);margin:10px 0;padding-top:10px;font-size:11px;">` +
+        `<div style="display:grid;grid-template-columns:auto 1fr;gap:2px 12px;">` +
+          `<span style="color:var(--gc-fg2)">${t('aboutAuthor')}:</span><span><a href="https://easyeda.com" target="_blank" rel="noopener" style="color:var(--gc-accent-b);text-decoration:none;">EasyEDA</a></span>` +
+          `<span style="color:var(--gc-fg2)">${t('aboutVersion')}:</span><span>${__VERSION__}</span>` +
+          `<span style="color:var(--gc-fg2)">${t('aboutBuildDate')}:</span><span>${__BUILD_DATE__}</span>` +
+          `<span style="color:var(--gc-fg2)">${t('aboutRepo')}:</span><span><a href="https://github.com/easyeda/online-gencad-viewer" target="_blank" rel="noopener" style="color:var(--gc-accent-b);text-decoration:none;word-break:break-all;">github.com/easyeda/online-gencad-viewer</a></span>` +
+        `</div>` +
+      `</div>`;
   }
   renderAbout();
 

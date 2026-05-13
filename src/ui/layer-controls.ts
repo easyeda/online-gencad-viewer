@@ -193,6 +193,7 @@ export function initFilterControls(panel: HTMLElement, layers: Map<string, Group
     { key: 'ref', targets: ['SILK_TEXT_TOP', 'SILK_TEXT_BOTTOM'], defaultActive: true },
     { key: 'value', targets: ['VALUE_TEXT_TOP', 'VALUE_TEXT_BOTTOM'], defaultActive: true },
     { key: 'labels', targets: ['LABELS'], defaultActive: true },
+    { key: 'text', targets: ['BOARD_TEXTS', 'ROUTE_TEXTS'], defaultActive: true },
   ];
 
   const states = new Map<string, boolean>();

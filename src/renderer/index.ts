@@ -51,10 +51,10 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   leafer.add(boardGroup);
 
   // Render board
-  renderBoard(data.board, boardGroup, style);
+  const boardTextGroup = renderBoard(data.board, boardGroup, style);
 
   // Render routes
-  const { layerGroups: routeLayerGroups, viaPadGroups, viaDrillGroup, labelsGroup } = renderRoutes(data.routes, data.pads, style, data.padstacks);
+  const { layerGroups: routeLayerGroups, viaPadGroups, viaDrillGroup, labelsGroup, routeTextGroup } = renderRoutes(data.routes, data.pads, style, data.padstacks);
 
   // Render components
   const { compGroup, padGroups, silkOutlineGroups, silkTextGroups, valueTextGroups, thDrillGroup } = renderComponents(
@@ -64,6 +64,12 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   // Assemble in visual stacking order (back → front)
   // 1. Board (backmost)
   // Already added above
+
+  // Board texts
+  if (boardTextGroup.children && boardTextGroup.children.length > 0) {
+    layers.set('BOARD_TEXTS', boardTextGroup);
+    leafer.add(boardTextGroup);
+  }
 
   // 2. Bottom routes
   const routesBottom = new Group();
@@ -143,6 +149,12 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   leafer.add(viaDrillGroup);
 
   // 10. Labels (frontmost, above drills)
+  // Route texts
+  if (routeTextGroup.children && routeTextGroup.children.length > 0) {
+    layers.set('ROUTE_TEXTS', routeTextGroup);
+    leafer.add(routeTextGroup);
+  }
+
   layers.set('LABELS', labelsGroup);
   leafer.add(labelsGroup);
 

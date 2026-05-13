@@ -105,7 +105,7 @@ export interface ComponentDef {
   shapeMirror: string;
   shapeFlip: boolean;
   artworks: ComponentArtwork[];
-  texts: { x: number; y: number; size: number; rot: number; mirror: string; layer: string; str: string; bw: number; bh: number; bx: number; by: number }[];
+  texts: GenCADText[];
   attributes: Record<string, string>;
 }
 
@@ -142,7 +142,14 @@ export interface RouteDef {
   signalName: string;
   segments: RouteSegment[];
   vias: ViaDef[];
+  texts: GenCADText[];
   attributes: Record<string, string>;
+}
+
+export interface GenCADText {
+  x: number; y: number; size: number; rot: number;
+  mirror: string; layer: string; str: string;
+  bw: number; bh: number; bx: number; by: number;
 }
 
 export interface BoardCutout {
@@ -155,6 +162,7 @@ export interface BoardDef {
   thickness?: number;
   outline: GenCADPrimitive[];
   cutouts: BoardCutout[];
+  texts: GenCADText[];
   attributes: Record<string, string>;
 }
 

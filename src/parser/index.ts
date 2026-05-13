@@ -9,7 +9,7 @@ export function parseGenCAD(text: string): GenCADData {
   const lines = text.split(/\r?\n/);
   const data: GenCADData = {
     header: { gencadVersion: '', units: 'INCH', unitsPerInch: 1, origin: { x: 0, y: 0 } },
-    board: { outline: [], cutouts: [], attributes: {} },
+    board: { outline: [], cutouts: [], texts: [], attributes: {} },
     pads: new Map(),
     padstacks: new Map(),
     artworks: new Map(),
@@ -91,6 +91,9 @@ export function parseGenCAD(text: string): GenCADData {
         }
         case 'LINE': case 'ARC': case 'CIRCLE': case 'RECTANGLE':
           addPrim(kw, a, curBoardTarget);
+          break;
+        case 'TEXT':
+          if (a.length >= 7) data.board.texts.push({ x: +a[0], y: +a[1], size: +a[2], rot: +a[3], mirror: a[4], layer: a[5], str: a[6], bw: +(a[7] ?? 0), bh: +(a[8] ?? 0), bx: +(a[9] ?? 0), by: +(a[10] ?? 0) });
           break;
         case 'ATTRIBUTE':
           if (a.length >= 2) curBoardTarget.attributes[a[0]] = a.slice(1).join(' ');
@@ -252,7 +255,7 @@ export function parseGenCAD(text: string): GenCADData {
     // --- ROUTES ---
     if (section === 'ROUTES') {
       if (kw === 'ROUTE' && a.length >= 1) {
-        curRoute = { signalName: a[0], segments: [], vias: [], attributes: {} };
+        curRoute = { signalName: a[0], segments: [], vias: [], texts: [], attributes: {} };
         curRouteSegment = null;
         data.routes.push(curRoute);
       } else if (curRoute) {
@@ -293,6 +296,9 @@ export function parseGenCAD(text: string): GenCADData {
             if (a.length >= 5) curRoute.vias.push({ padName: a[0], x: +a[1], y: +a[2], layer: a[3], drillSize: +a[4], name: a[5] ?? '' });
             break;
           case 'ATTRIBUTE': if (a.length >= 2) curRoute.attributes[a[0]] = a.slice(1).join(' '); break;
+          case 'TEXT':
+            if (a.length >= 7 && curRoute) curRoute.texts.push({ x: +a[0], y: +a[1], size: +a[2], rot: +a[3], mirror: a[4], layer: a[5], str: a[6], bw: +(a[7] ?? 0), bh: +(a[8] ?? 0), bx: +(a[9] ?? 0), by: +(a[10] ?? 0) });
+            break;
         }
       }
       continue;

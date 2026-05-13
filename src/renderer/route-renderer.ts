@@ -8,12 +8,13 @@ export function renderRoutes(
   pads: Map<string, PadDef>,
   style: RenderStyle,
   padstacks?: Map<string, PadstackDef>
-): { layerGroups: Map<string, Group>; viaPadGroups: Map<string, Group>; viaDrillGroup: Group; labelsGroup: Group } {
+): { layerGroups: Map<string, Group>; viaPadGroups: Map<string, Group>; viaDrillGroup: Group; labelsGroup: Group; routeTextGroup: Group } {
   const sw = style.lineWidth;
 
   const viaPadGroups = new Map<string, Group>();
   const viaDrillGroup = new Group();
   const labelsGroup = new Group();
+  const routeTextGroup = new Group();
 
   function getViaPadGroup(layer: string): Group {
     if (!viaPadGroups.has(layer)) {
@@ -136,7 +137,24 @@ export function renderRoutes(
     }
   }
 
-  return { layerGroups, viaPadGroups, viaDrillGroup, labelsGroup };
+  // Route-level TEXT
+  for (const route of routes) {
+    for (const txt of route.texts) {
+      const textEl = new Text({
+        x: txt.x,
+        y: -txt.y,
+        text: txt.str,
+        fontSize: txt.size,
+        fill: '#ffffff',
+        textAlign: 'center',
+        verticalAlign: 'middle',
+        rotation: txt.rot ? -txt.rot : 0,
+      });
+      routeTextGroup.add(textEl);
+    }
+  }
+
+  return { layerGroups, viaPadGroups, viaDrillGroup, labelsGroup, routeTextGroup };
 }
 
 function getMaxRadius(pad: PadDef): number {
