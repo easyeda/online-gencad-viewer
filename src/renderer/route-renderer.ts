@@ -58,6 +58,17 @@ export function renderRoutes(
       (segGroup as any)._signal = route.signalName;
       (segGroup as any)._layer = seg.layer;
 
+      // Calculate bounds for culling optimization
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const p of seg.primitives) {
+        switch (p.type) {
+          case 'LINE': { minX = Math.min(minX, p.x1, p.x2); minY = Math.min(minY, p.y1, p.y2); maxX = Math.max(maxX, p.x1, p.x2); maxY = Math.max(maxY, p.y1, p.y2); break; }
+          case 'ARC': { minX = Math.min(minX, p.xs, p.xe); minY = Math.min(minY, p.ys, p.ye); maxX = Math.max(maxX, p.xs, p.xe); maxY = Math.max(maxY, p.ys, p.ye); break; }
+          case 'CIRCLE': { minX = Math.min(minX, p.xc - p.r); minY = Math.min(minY, p.yc - p.r); maxX = Math.max(maxX, p.xc + p.r); maxY = Math.max(maxY, p.yc + p.r); break; }
+          case 'RECTANGLE': { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x + p.w); maxY = Math.max(maxY, p.y + p.h); break; }
+        }
+      }
+
       for (const p of seg.primitives) {
         const el = primitiveToUI(p, color, trackSw);
         segGroup.add(el);

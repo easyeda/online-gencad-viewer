@@ -54,41 +54,42 @@ export function primitiveToUI(p: GenCADPrimitive, color: string, strokeWidth = 0
 }
 
 export function primitivesToPath(prims: GenCADPrimitive[], color: string): UI {
-  let d = '';
+  // Pre-allocate string array and join once for better performance
+  const parts: string[] = [];
   let started = false;
 
   for (const p of prims) {
     switch (p.type) {
       case 'LINE': {
-        if (!started) { d += `M ${p.x1} ${-p.y1} `; started = true; }
-        else { d += `L ${p.x1} ${-p.y1} `; }
-        d += `L ${p.x2} ${-p.y2} `;
+        if (!started) { parts.push(`M ${p.x1} ${-p.y1}`); started = true; }
+        else { parts.push(`L ${p.x1} ${-p.y1}`); }
+        parts.push(`L ${p.x2} ${-p.y2}`);
         break;
       }
       case 'ARC': {
-        if (!started) { d += `M ${p.xs} ${-p.ys} `; started = true; }
-        else { d += `L ${p.xs} ${-p.ys} `; }
-        d += arcSVGSegment(p) + ' ';
+        if (!started) { parts.push(`M ${p.xs} ${-p.ys}`); started = true; }
+        else { parts.push(`L ${p.xs} ${-p.ys}`); }
+        parts.push(arcSVGSegment(p));
         break;
       }
       case 'CIRCLE': {
         const { xc, yc, r } = p;
-        d += `M ${xc - r} ${-yc} A ${r} ${r} 0 0 0 ${xc + r} ${-yc} A ${r} ${r} 0 0 0 ${xc - r} ${-yc} `;
+        parts.push(`M ${xc - r} ${-yc} A ${r} ${r} 0 0 0 ${xc + r} ${-yc} A ${r} ${r} 0 0 0 ${xc - r} ${-yc}`);
         started = true;
         break;
       }
       case 'RECTANGLE': {
         const { x, y, w, h } = p;
-        d += `M ${x} ${-y} L ${x + w} ${-y} L ${x + w} ${-(y + h)} L ${x} ${-(y + h)} Z `;
+        parts.push(`M ${x} ${-y} L ${x + w} ${-y} L ${x + w} ${-(y + h)} L ${x} ${-(y + h)} Z`);
         started = true;
         break;
       }
     }
   }
 
-  if (started) d += 'Z';
+  if (started) parts.push('Z');
   const el = new Path({
-    path: d,
+    path: parts.join(' '),
     fill: color,
     stroke: undefined,
     windingRule: 'evenodd',
@@ -102,21 +103,16 @@ export function primitivesToPath(prims: GenCADPrimitive[], color: string): UI {
  * Screen: Y negated, so CCW becomes CW → SVG sweep-flag = 0.
  */
 function arcSVGSegment(a: { xs: number; ys: number; xe: number; ye: number; xc: number; yc: number }): string {
-  const dxs = a.xs - a.xc;
-  const dys = a.ys - a.yc;
-  const r = Math.sqrt(dxs * dxs + dys * dys);
-  if (r < 1e-10) return '';
+  const dx = a.xs - a.xc;
+  const dy = a.ys - a.yc;
+  const r2 = dx * dx + dy * dy;
+  if (r2 < 1e-10) return '';
+  const r = Math.sqrt(r2);
 
-  const startAngle = Math.atan2(dys, dxs);
-  const endAngle = Math.atan2(a.ye - a.yc, a.xe - a.xc);
+  // Use atan2 for sweep calculation
+  let sweep = Math.atan2(a.ye - a.yc, a.xe - a.xc) - Math.atan2(dy, dx);
+  if (sweep <= 0) sweep += Math.PI * 2;
 
-  // CCW sweep in Y-up
-  let sweep = endAngle - startAngle;
-  while (sweep <= 0) sweep += 2 * Math.PI;
-
-  // After Y negation, CCW becomes CW. SVG sweep-flag 0 = CW.
-  // large-arc: if original sweep > 180°
   const largeArc = sweep > Math.PI ? 1 : 0;
-
-  return `A ${r} ${r} 0 ${largeArc} 0 ${a.xe} ${-a.ye}`;
+  return `A${r} ${r} 0 ${largeArc} 0 ${a.xe} ${-a.ye}`;
 }

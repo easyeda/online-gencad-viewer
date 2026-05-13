@@ -174,32 +174,44 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
     height: bh + pad * 2,
   });
 
-  // Manual wheel zoom (directly set zoomLayer transform to zoom around cursor)
+  // Performance: throttle wheel zoom with requestAnimationFrame
+  let rafId: number | null = null;
+  let pendingWheel: WheelEvent | null = null;
+
   container.addEventListener('wheel', (e: WheelEvent) => {
     e.preventDefault();
-    const factor = e.deltaY < 0 ? 1.35 : 1 / 1.35;
-    const zl = leafer.zoomLayer;
-    const cur = zl.scaleX || 1;
-    const next = Math.max(cur * factor, 0.01);
-    if (next === cur) return;
-    const rect = container.getBoundingClientRect();
-    const sx = e.clientX - rect.left;
-    const sy = e.clientY - rect.top;
-    const ratio = next / cur;
-    const newX = sx - (sx - (zl.x || 0)) * ratio;
-    const newY = sy - (sy - (zl.y || 0)) * ratio;
-    zl.x = newX;
-    zl.y = newY;
-    zl.scaleX = next;
-    zl.scaleY = next;
+    pendingWheel = e;
+    if (rafId) return;
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      const we = pendingWheel!;
+      pendingWheel = null;
+      const factor = we.deltaY < 0 ? 1.35 : 1 / 1.35;
+      const zl = leafer.zoomLayer;
+      const cur = zl.scaleX || 1;
+      const next = Math.max(cur * factor, 0.01);
+      if (next === cur) return;
+      const rect = container.getBoundingClientRect();
+      const sx = we.clientX - rect.left;
+      const sy = we.clientY - rect.top;
+      const ratio = next / cur;
+      const newX = sx - (sx - (zl.x || 0)) * ratio;
+      const newY = sy - (sy - (zl.y || 0)) * ratio;
+      zl.x = newX;
+      zl.y = newY;
+      zl.scaleX = next;
+      zl.scaleY = next;
+    });
   }, { passive: false });
 
   // Prevent right-click context menu
   container.addEventListener('contextmenu', (e: MouseEvent) => e.preventDefault());
 
-  // Manual drag-to-pan (left and right button)
+  // Performance: throttle drag-to-pan with requestAnimationFrame
   let dragging = false;
   let lastX = 0, lastY = 0;
+  let panRafId: number | null = null;
+  let pendingDx = 0, pendingDy = 0;
 
   container.addEventListener('pointerdown', (e: PointerEvent) => {
     if (e.button === 0 || e.button === 2) {
@@ -212,17 +224,26 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   });
   container.addEventListener('pointermove', (e: PointerEvent) => {
     if (!dragging) return;
-    const dx = e.clientX - lastX;
-    const dy = e.clientY - lastY;
+    pendingDx += e.clientX - lastX;
+    pendingDy += e.clientY - lastY;
     lastX = e.clientX;
     lastY = e.clientY;
-    const zl = leafer.zoomLayer;
-    zl.x = (zl.x || 0) + dx;
-    zl.y = (zl.y || 0) + dy;
+    if (panRafId) return;
+    panRafId = requestAnimationFrame(() => {
+      panRafId = null;
+      const zl = leafer.zoomLayer;
+      zl.x = (zl.x || 0) + pendingDx;
+      zl.y = (zl.y || 0) + pendingDy;
+      pendingDx = 0;
+      pendingDy = 0;
+    });
   });
   const stopDrag = (e: PointerEvent) => {
     if (!dragging) return;
     dragging = false;
+    if (panRafId) { cancelAnimationFrame(panRafId); panRafId = null; }
+    pendingDx = 0;
+    pendingDy = 0;
     container.releasePointerCapture(e.pointerId);
     container.style.cursor = '';
   };
