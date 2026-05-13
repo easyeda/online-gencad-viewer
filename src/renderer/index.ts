@@ -147,8 +147,9 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   layers.set('TH_DRILLS', thDrillGroup);
   leafer.add(thDrillGroup);
 
-  // Via pads (per-layer, follows layer visibility)
-  for (const [viaLayer, viaGroup] of viaPadGroups) {
+  // Via pads (per-layer, sorted BOTTOM → INNER → TOP so top layer renders on top)
+  const sortedViaEntries = [...viaPadGroups.entries()].sort((a, b) => routeLayerOrder(a[0]) - routeLayerOrder(b[0]));
+  for (const [viaLayer, viaGroup] of sortedViaEntries) {
     const key = `VIAS_${viaLayer}`;
     layers.set(key, viaGroup);
     leafer.add(viaGroup);
