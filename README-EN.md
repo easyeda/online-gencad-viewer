@@ -6,6 +6,8 @@ A free online interactive viewer for GenCAD (.cad) PCB files, supporting multi-l
 
 you can use it directly at: https://pcbtool.net/tools/online-gencad-viewer.html
 
+or you can download the built html and open at browser: [online-gencad-viewer.html](./dist/online-gencad-viewer.html)
+
 ## Features
 
 - Parse and render GenCAD format PCB files

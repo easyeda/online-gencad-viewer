@@ -6,6 +6,8 @@
 
 你可以直接在这里使用：https://pcbtool.net/tools/online-gencad-viewer.html
 
+也可以下载构建好的html文件，在浏览器打开使用 [online-gencad-viewer.html](./dist/online-gencad-viewer.html)
+
 ## 功能特性
 
 - 解析并渲染 GenCAD 格式 PCB 文件
