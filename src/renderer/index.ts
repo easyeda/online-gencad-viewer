@@ -53,7 +53,7 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
 
   const { layerGroups: routeLayerGroups, viaPadGroups, viaDrillGroup, labelGroups, routeTextGroup } = renderRoutes(data.routes, data.pads, style, data.padstacks);
 
-  const { compGroup, padGroups, padLabelGroups, silkOutlineGroups, silkTextGroups, valueTextGroups, thDrillGroup } = renderComponents(
+  const { compGroup, padGroups, padLabelGroups, silkOutlineGroups, silkTextGroups, valueTextGroups, thDrillGroup, thPadLabelGroup } = renderComponents(
     data.components, data.shapes, data.pads, data.padstacks, style, data.signals, data.artworks
   );
 
@@ -132,6 +132,12 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   // TH drills (after silk, before vias — visible through all layers)
   layers.set('TH_DRILLS', thDrillGroup);
   leafer.add(thDrillGroup);
+
+  // TH pad labels (above drills so they're not covered)
+  if (thPadLabelGroup.children && thPadLabelGroup.children.length > 0) {
+    layers.set('TH_PAD_LABELS', thPadLabelGroup);
+    leafer.add(thPadLabelGroup);
+  }
 
   // Via pads (per-layer, sorted BOTTOM → INNER → TOP)
   const sortedViaEntries = [...viaPadGroups.entries()].sort((a, b) => routeLayerOrder(a[0]) - routeLayerOrder(b[0]));

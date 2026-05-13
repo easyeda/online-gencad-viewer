@@ -11,6 +11,7 @@ export interface ComponentRenderResult {
   silkTextGroups: Map<string, Group>;
   valueTextGroups: Map<string, Group>;
   thDrillGroup: Group;
+  thPadLabelGroup: Group;
 }
 
 export function renderComponents(
@@ -35,6 +36,7 @@ export function renderComponents(
   }
 
   const thDrillGroup = new Group();
+  const thPadLabelGroup = new Group();
   const padLabelGroups = new Map<string, Group>();
   const padGroups = new Map<string, Group>();
   const silkOutlineGroups = new Map<string, Group>();
@@ -211,6 +213,16 @@ export function renderComponents(
       const pinIsTH = pinHasDrill && ps && ps.pads.length > 1;
 
       if (pinIsTH && ps && ps.pads.length > 0) {
+        // Find first valid pad for label sizing
+        let labelPrims: GenCADPrimitive[] | null = null;
+        for (const psPad of ps.pads) {
+          const linkedPad = findPad(pads, psPad.padName);
+          if (linkedPad && linkedPad.primitives.length > 0) {
+            labelPrims = linkedPad.primitives;
+            break;
+          }
+        }
+
         for (const psPad of ps.pads) {
           const linkedPad = findPad(pads, psPad.padName);
           if (!linkedPad || linkedPad.primitives.length === 0) continue;
@@ -258,30 +270,30 @@ export function renderComponents(
           (pinWrap as any)._component = comp.name;
           (pinWrap as any)._pin = pin.pinName;
           getPadGroup(layerName).add(pinWrap);
+        }
 
-          // Pin label on top layer only
-          if (psPad === ps.pads[ps.pads.length - 1]) {
-            const sigName = pinSignalMap.get(`${comp.name}.${pin.pinName}`) || '';
-            const labelText = sigName ? `${pin.pinName}:${sigName}` : pin.pinName;
-            const padSize = getPadSizeFromPrims(linkedPad.primitives);
-            const padLong = getPadLongDim(linkedPad.primitives);
-            const fontSize = Math.min(padSize, padLong / Math.max(labelText.length * 0.65, 1));
-            if (fontSize > 0) {
-              const padAngle = getPadOrientation(linkedPad.primitives);
-              const pos = toWorldPos(comp, pin.x, pin.y);
-              const lblRot = toWorldRot(comp, padAngle + (pin.rot || 0));
-              const lbl = new Text({
-                x: pos.x,
-                y: pos.y,
-                text: labelText,
-                fontSize,
-                fill: '#fff',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                rotation: lblRot,
-              });
-              getPadLabelGroup(layerName).add(lbl);
-            }
+        // TH pad label (render once using first valid pad, on component's primary layer)
+        if (labelPrims) {
+          const sigName = pinSignalMap.get(`${comp.name}.${pin.pinName}`) || '';
+          const labelText = sigName ? `${pin.pinName}:${sigName}` : pin.pinName;
+          const padSize = getPadSizeFromPrims(labelPrims);
+          const padLong = getPadLongDim(labelPrims);
+          const fontSize = Math.max(Math.min(padSize, padLong / Math.max(labelText.length * 0.65, 1)), sw * 2);
+          if (fontSize > 0) {
+            const padAngle = getPadOrientation(labelPrims);
+            const pos = toWorldPos(comp, pin.x, pin.y);
+            const lblRot = toWorldRot(comp, padAngle + (pin.rot || 0));
+            const lbl = new Text({
+              x: pos.x,
+              y: pos.y,
+              text: labelText,
+              fontSize,
+              fill: '#fff',
+              textAlign: 'center',
+              verticalAlign: 'middle',
+              rotation: lblRot,
+            });
+            thPadLabelGroup.add(lbl);
           }
         }
 
@@ -374,7 +386,7 @@ export function renderComponents(
         const padSizeForLabel = smdPrims.length > 0 ? getPadSizeFromPrims(smdPrims) : sw * 6;
         const padLongForLabel = smdPrims.length > 0 ? getPadLongDim(smdPrims) : sw * 6;
         const padAngleForLabel = smdPrims.length > 0 ? getPadOrientation(smdPrims) : 0;
-        const fontSize = Math.min(padSizeForLabel, padLongForLabel / Math.max(labelText.length * 0.65, 1));
+        const fontSize = Math.max(Math.min(padSizeForLabel, padLongForLabel / Math.max(labelText.length * 0.65, 1)), sw * 2);
         if (fontSize > 0) {
           const pos = toWorldPos(comp, pin.x, pin.y);
           const lblRot = toWorldRot(comp, padAngleForLabel + (pin.rot || 0));
@@ -496,7 +508,7 @@ export function renderComponents(
     getSilkTextGroup(silkLayer).add(rfg);
   }
 
-  return { compGroup, padGroups, padLabelGroups, silkOutlineGroups, silkTextGroups, valueTextGroups, thDrillGroup };
+  return { compGroup, padGroups, padLabelGroups, silkOutlineGroups, silkTextGroups, valueTextGroups, thDrillGroup, thPadLabelGroup };
 }
 
 function computeShapeBBox(shape: ShapeDef): { minX: number; minY: number; maxX: number; maxY: number } {

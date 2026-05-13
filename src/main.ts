@@ -188,7 +188,7 @@ function highlightComponent(name: string) {
       dimGroup(g);
     } else if (key === 'VIA_DRILLS' || key.startsWith('VIAS_')) {
       dimGroup(g);
-    } else if (key.startsWith('LABELS_') || key.startsWith('PAD_LABELS_') || key === 'BOARD_TEXTS' || key === 'ROUTE_TEXTS') {
+    } else if (key.startsWith('LABELS_') || key.startsWith('PAD_LABELS_') || key === 'TH_PAD_LABELS' || key === 'BOARD_TEXTS' || key === 'ROUTE_TEXTS') {
       dimGroup(g);
     } else {
       dimGroup(g);
@@ -242,7 +242,7 @@ function highlightNet(signalName: string) {
       });
     } else if (key.startsWith('LABELS_')) {
       // keep route net name labels visible
-    } else if (key.startsWith('PAD_LABELS_') || key === 'BOARD_TEXTS' || key === 'ROUTE_TEXTS') {
+    } else if (key.startsWith('PAD_LABELS_') || key === 'TH_PAD_LABELS' || key === 'BOARD_TEXTS' || key === 'ROUTE_TEXTS') {
       dimGroup(g);
     } else {
       dimGroup(g);

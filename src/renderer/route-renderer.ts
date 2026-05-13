@@ -89,7 +89,7 @@ export function renderRoutes(
         if (angle > 90) angle -= 180;
         else if (angle < -90) angle += 180;
         const maxFontByLen = maxLen > 0 ? maxLen / Math.max(route.signalName.length * 0.6, 1) : trackSw;
-        const fontSize = Math.max(Math.min(trackSw, maxFontByLen), sw);
+        const fontSize = Math.max(Math.min(trackSw, maxFontByLen), sw * 3);
         const textEl = new Text({
           x: cx,
           y: cy,
