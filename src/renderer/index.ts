@@ -78,15 +78,9 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   if (botRoute) { routesBottom.add(botRoute); layers.set('ROUTE_BOTTOM', botRoute); }
   leafer.add(routesBottom);
 
-  // Bottom route labels (after bottom routes, before bottom pads)
-  const botLabels = labelGroups.get('BOTTOM');
-  if (botLabels) { layers.set('LABELS_BOTTOM', botLabels); leafer.add(botLabels); }
-
   // 3. Bottom pads
   const padsBottom = padGroups.get('BOTTOM');
   if (padsBottom) { layers.set('PADS_BOTTOM', padsBottom); leafer.add(padsBottom); }
-  const padLabelsBottom = padLabelGroups.get('BOTTOM');
-  if (padLabelsBottom) { layers.set('PAD_LABELS_BOTTOM', padLabelsBottom); leafer.add(padLabelsBottom); }
 
   // 4. Bottom silkscreen
   const silkOutlineBottom = silkOutlineGroups.get('SILKSCREEN_BOTTOM');
@@ -108,17 +102,12 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   }
   leafer.add(routeContainer);
 
-  // Inner pads + inner pad labels + inner route labels
+  // Inner pads
   const innerPadKeys = [...padGroups.keys()].filter(k => k.startsWith('INNER')).sort();
   for (const key of innerPadKeys) {
-    // Inner route labels for this layer
-    const innerLbl = labelGroups.get(key);
-    if (innerLbl) { layers.set(`LABELS_${key}`, innerLbl); leafer.add(innerLbl); }
     const pg = padGroups.get(key)!;
     layers.set(`PADS_${key}`, pg);
     leafer.add(pg);
-    const plg = padLabelGroups.get(key);
-    if (plg) { layers.set(`PAD_LABELS_${key}`, plg); leafer.add(plg); }
   }
 
   // 6. Top routes
@@ -128,15 +117,9 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   if (topRoute) { routesTop.add(topRoute); layers.set('ROUTE_TOP', topRoute); }
   leafer.add(routesTop);
 
-  // Top route labels (after top routes, before top pads)
-  const topLabels = labelGroups.get('TOP');
-  if (topLabels) { layers.set('LABELS_TOP', topLabels); leafer.add(topLabels); }
-
   // 7. Top pads
   const padsTop = padGroups.get('TOP');
   if (padsTop) { layers.set('PADS_TOP', padsTop); leafer.add(padsTop); }
-  const padLabelsTop = padLabelGroups.get('TOP');
-  if (padLabelsTop) { layers.set('PAD_LABELS_TOP', padLabelsTop); leafer.add(padLabelsTop); }
 
   // Component outlines
   layers.set('COMPONENTS', compGroup);
@@ -154,7 +137,7 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   layers.set('TH_DRILLS', thDrillGroup);
   leafer.add(thDrillGroup);
 
-  // Via pads (per-layer, sorted BOTTOM → INNER → TOP so top layer renders on top)
+  // Via pads (per-layer, sorted BOTTOM → INNER → TOP)
   const sortedViaEntries = [...viaPadGroups.entries()].sort((a, b) => routeLayerOrder(a[0]) - routeLayerOrder(b[0]));
   for (const [viaLayer, viaGroup] of sortedViaEntries) {
     const key = `VIAS_${viaLayer}`;
@@ -166,7 +149,17 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   layers.set('VIA_DRILLS', viaDrillGroup);
   leafer.add(viaDrillGroup);
 
-  // 10. Route texts (frontmost, above drills)
+  // 10. Net name labels (above drills, sorted BOTTOM → INNER → TOP)
+  //     Top-layer labels render on top of bottom-layer labels
+  const allLayers = ['BOTTOM', ...innerPadKeys, 'TOP'];
+  for (const layer of allLayers) {
+    const lbl = labelGroups.get(layer);
+    if (lbl) { layers.set(`LABELS_${layer}`, lbl); leafer.add(lbl); }
+    const plbl = padLabelGroups.get(layer);
+    if (plbl) { layers.set(`PAD_LABELS_${layer}`, plbl); leafer.add(plbl); }
+  }
+
+  // Route texts (frontmost)
   if (routeTextGroup.children && routeTextGroup.children.length > 0) {
     layers.set('ROUTE_TEXTS', routeTextGroup);
     leafer.add(routeTextGroup);
