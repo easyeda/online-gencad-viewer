@@ -27,12 +27,22 @@ function forceSyncRender(lf: Leafer | null) {
 }
 
 function loadFile(text: string, fileName: string) {
+  performance.mark('gc:load-start');
   layout.welcomeOverlay.style.display = 'none';
   layout.fileNameEl.textContent = fileName;
 
   try {
+    performance.mark('gc:parse-start');
     currentData = parseGenCAD(text);
+    performance.mark('gc:parse-end');
+    performance.measure('gc:parse', 'gc:parse-start', 'gc:parse-end');
+    console.log('[GC Perf] 文件解析耗时:', performance.getEntriesByName('gc:parse')[0]?.duration?.toFixed(2) + 'ms');
+
+    performance.mark('gc:render-start');
     renderResult = renderAll(layout.canvasDiv, currentData);
+    performance.mark('gc:render-end');
+    performance.measure('gc:render', 'gc:render-start', 'gc:render-end');
+    console.log('[GC Perf] 渲染耗时:', performance.getEntriesByName('gc:render')[0]?.duration?.toFixed(2) + 'ms');
 
     refreshProps = null;
     clearProperties(layout.propertyContent);
@@ -40,6 +50,10 @@ function loadFile(text: string, fileName: string) {
     initLayerControls(layout.layerPanel, renderResult.layers);
     initFilterControls(layout.filterPanel, renderResult.layers);
     populatePanels();
+
+    performance.mark('gc:load-end');
+    performance.measure('gc:load', 'gc:load-start', 'gc:load-end');
+    console.log('[GC Perf] 文件加载总耗时:', performance.getEntriesByName('gc:load')[0]?.duration?.toFixed(2) + 'ms');
   } catch (err) {
     console.error('Parse error:', err);
     layout.propertyContent.textContent = `解析错误: ${err}`;

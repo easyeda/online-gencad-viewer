@@ -59,11 +59,17 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
 
   const boardTextGroup = renderBoard(data.board, boardGroup, style);
 
+  performance.mark('gc:render-routes-start');
   const { layerGroups: routeLayerGroups, viaPadGroups, viaDrillGroup, labelGroups, routeTextGroup } = renderRoutes(data.routes, data.pads, style, data.padstacks);
+  performance.mark('gc:render-routes-end');
+  performance.measure('gc:render-routes', 'gc:render-routes-start', 'gc:render-routes-end');
 
+  performance.mark('gc:render-comps-start');
   const { compGroup, padGroups, padLabelGroups, silkOutlineGroups, silkTextGroups, valueTextGroups, thDrillGroup, thPadLabelGroup } = renderComponents(
     data.components, data.shapes, data.pads, data.padstacks, style, data.signals, data.artworks
   );
+  performance.mark('gc:render-comps-end');
+  performance.measure('gc:render-comps', 'gc:render-comps-start', 'gc:render-comps-end');
 
   // Assemble in visual stacking order (back → front)
   // Board texts
@@ -167,12 +173,32 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
 
   // Fit view to board bounds
   const pad = Math.max(bw, bh) * 0.05;
+
+  performance.mark('gc:render-assemble-end');
+  performance.mark('gc:render-zoom-start');
   leafer.zoom({
     x: minX - pad,
     y: -(maxY + pad),
     width: bw + pad * 2,
     height: bh + pad * 2,
   });
+  performance.mark('gc:render-zoom-end');
+  performance.measure('gc:render-zoom', 'gc:render-zoom-start', 'gc:render-zoom-end');
+  performance.mark('gc:render-all-end');
+  performance.measure('gc:render-all', 'gc:render-start', 'gc:render-all-end');
+
+  // Log rendering stats
+  const parseMs = performance.getEntriesByName('gc:parse')[0]?.duration || 0;
+  const routesMs = performance.getEntriesByName('gc:render-routes')[0]?.duration || 0;
+  const compsMs = performance.getEntriesByName('gc:render-comps')[0]?.duration || 0;
+  const zoomMs = performance.getEntriesByName('gc:render-zoom')[0]?.duration || 0;
+  const totalMs = performance.getEntriesByName('gc:render-all')[0]?.duration || 0;
+  console.log(`[GC Perf] 渲染统计: 解析=${parseMs.toFixed(0)}ms, 走线=${routesMs.toFixed(0)}ms, 元件=${compsMs.toFixed(0)}ms, 缩放=${zoomMs.toFixed(0)}ms, 总计=${totalMs.toFixed(0)}ms`);
+
+  // Count elements
+  let elemCount = 0;
+  for (const g of layers.values()) elemCount += (g.children?.length || 0);
+  console.log(`[GC Perf] 图层数=${layers.size}, 图元数=${elemCount}, 走线数=${data.routes.length}`);
 
   // Performance: throttle wheel zoom with requestAnimationFrame
   let rafId: number | null = null;
@@ -182,6 +208,7 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
     e.preventDefault();
     pendingWheel = e;
     if (rafId) return;
+    const start = performance.now();
     rafId = requestAnimationFrame(() => {
       rafId = null;
       const we = pendingWheel!;
@@ -201,6 +228,7 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
       zl.y = newY;
       zl.scaleX = next;
       zl.scaleY = next;
+      console.log(`[GC Perf] 缩放: ${(performance.now() - start).toFixed(2)}ms, scale=${next.toFixed(4)}`);
     });
   }, { passive: false });
 
@@ -230,12 +258,14 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
     lastY = e.clientY;
     if (panRafId) return;
     panRafId = requestAnimationFrame(() => {
+      const start = performance.now();
       panRafId = null;
       const zl = leafer.zoomLayer;
       zl.x = (zl.x || 0) + pendingDx;
       zl.y = (zl.y || 0) + pendingDy;
       pendingDx = 0;
       pendingDy = 0;
+      console.log(`[GC Perf] 平移: ${(performance.now() - start).toFixed(2)}ms`);
     });
   });
   const stopDrag = (e: PointerEvent) => {
