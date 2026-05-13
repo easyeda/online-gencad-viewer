@@ -70,26 +70,24 @@ export function renderRoutes(
           const len = Math.sqrt((l.x2 - l.x1) ** 2 + (l.y2 - l.y1) ** 2);
           if (len > maxLen) { maxLen = len; longest = l; }
         }
+        const mx = (longest.x1 + longest.x2) / 2;
+        const my = -(longest.y1 + longest.y2) / 2;
+        let angle = Math.atan2(-(longest.y2 - longest.y1), longest.x2 - longest.x1) * 180 / Math.PI;
+        if (angle > 90) angle -= 180;
+        else if (angle < -90) angle += 180;
         const fontSize = trackSw * 0.95;
-        if (maxLen > fontSize * route.signalName.length * 0.6) {
-          const mx = (longest.x1 + longest.x2) / 2;
-          const my = -(longest.y1 + longest.y2) / 2;
-          let angle = Math.atan2(-(longest.y2 - longest.y1), longest.x2 - longest.x1) * 180 / Math.PI;
-          if (angle > 90) angle -= 180;
-          else if (angle < -90) angle += 180;
-          const textEl = new Text({
-            x: mx,
-            y: my,
-            text: route.signalName,
-            fontSize,
-            fill: '#ffffff',
-            textAlign: 'center',
-            verticalAlign: 'middle',
-            rotation: angle,
-          });
-          (textEl as any)._class = 'route-label';
-          labelsGroup.add(textEl);
-        }
+        const textEl = new Text({
+          x: mx,
+          y: my,
+          text: route.signalName,
+          fontSize,
+          fill: '#ffffff',
+          textAlign: 'center',
+          verticalAlign: 'middle',
+          rotation: angle,
+        });
+        (textEl as any)._class = 'route-label';
+        labelsGroup.add(textEl);
       }
     }
 

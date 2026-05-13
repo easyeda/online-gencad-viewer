@@ -10,6 +10,7 @@ export interface ComponentRenderResult {
   silkTextGroups: Map<string, Group>;
   valueTextGroups: Map<string, Group>;
   thDrillGroup: Group;
+  padLabelsGroup: Group;
 }
 
 export function renderComponents(
@@ -33,6 +34,7 @@ export function renderComponents(
   }
 
   const thDrillGroup = new Group();
+  const padLabelsGroup = new Group();
   const padGroups = new Map<string, Group>();
   const silkOutlineGroups = new Map<string, Group>();
   const silkTextGroups = new Map<string, Group>();
@@ -174,25 +176,22 @@ export function renderComponents(
             const labelText = sigName ? `${pin.pinName}:${sigName}` : pin.pinName;
             const padSize = getPadSizeFromPrims(linkedPad.primitives);
             const padLong = getPadLongDim(linkedPad.primitives);
-            const fontSize = Math.min(padSize * 0.8, padLong / Math.max(labelText.length * 0.6, 1));
+            const fontSize = Math.max(Math.min(padSize * 0.8, padLong / Math.max(labelText.length * 0.6, 1)), padSize * 0.3);
             if (fontSize > 0) {
               const padAngle = getPadOrientation(linkedPad.primitives);
-              let lblAngle = padAngle + (pin.rot || 0);
-              if (lblAngle > 90) lblAngle -= 180;
-              else if (lblAngle < -90) lblAngle += 180;
-
+              const pos = toWorldPos(comp, pin.x, pin.y);
+              const lblRot = toWorldRot(comp, padAngle + (pin.rot || 0));
               const lbl = new Text({
-                x: pin.x,
-                y: -pin.y,
+                x: pos.x,
+                y: pos.y,
                 text: labelText,
                 fontSize,
                 fill: '#fff',
                 textAlign: 'center',
                 verticalAlign: 'middle',
-                rotation: -lblAngle,
+                rotation: lblRot,
               });
-              (lbl as any)._class = 'pad-label';
-              pinWrap.add(lbl);
+              padLabelsGroup.add(lbl);
             }
           }
         }
@@ -286,23 +285,21 @@ export function renderComponents(
         const padSizeForLabel = smdPrims.length > 0 ? getPadSizeFromPrims(smdPrims) : sw * 6;
         const padLongForLabel = smdPrims.length > 0 ? getPadLongDim(smdPrims) : sw * 6;
         const padAngleForLabel = smdPrims.length > 0 ? getPadOrientation(smdPrims) : 0;
-        let lblAngle = padAngleForLabel + (pin.rot || 0);
-        if (lblAngle > 90) lblAngle -= 180;
-        else if (lblAngle < -90) lblAngle += 180;
-        const fontSize = Math.min(padSizeForLabel * 0.8, padLongForLabel / Math.max(labelText.length * 0.6, 1));
+        const fontSize = Math.max(Math.min(padSizeForLabel * 0.8, padLongForLabel / Math.max(labelText.length * 0.6, 1)), padSizeForLabel * 0.3);
         if (fontSize > 0) {
+          const pos = toWorldPos(comp, pin.x, pin.y);
+          const lblRot = toWorldRot(comp, padAngleForLabel + (pin.rot || 0));
           const lbl = new Text({
-            x: pin.x,
-            y: -pin.y,
+            x: pos.x,
+            y: pos.y,
             text: labelText,
             fontSize,
             fill: '#fff',
             textAlign: 'center',
             verticalAlign: 'middle',
-            rotation: -lblAngle,
+            rotation: lblRot,
           });
-          (lbl as any)._class = 'pad-label';
-          pinWrap.add(lbl);
+          padLabelsGroup.add(lbl);
         }
 
         // SMD pin may still have a drill (e.g. connectors marked as SMD)
@@ -410,7 +407,7 @@ export function renderComponents(
     getSilkTextGroup(silkLayer).add(rfg);
   }
 
-  return { compGroup, padGroups, silkOutlineGroups, silkTextGroups, valueTextGroups, thDrillGroup };
+  return { compGroup, padGroups, silkOutlineGroups, silkTextGroups, valueTextGroups, thDrillGroup, padLabelsGroup };
 }
 
 function computeShapeBBox(shape: ShapeDef): { minX: number; minY: number; maxX: number; maxY: number } {
@@ -523,4 +520,25 @@ function getPadOrientation(prims: GenCADPrimitive[]): number {
     }
   }
   return angle;
+}
+
+function toWorldPos(comp: ComponentDef, localX: number, localY: number): { x: number; y: number } {
+  let lx = localX, ly = localY;
+  if (comp.shapeMirror === 'MIRRORX') ly = -ly;
+  else if (comp.shapeMirror === 'MIRRORY') lx = -lx;
+  const rad = comp.rotation * Math.PI / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  return {
+    x: comp.x + lx * cos - ly * sin,
+    y: -(comp.y + lx * sin + ly * cos),
+  };
+}
+
+function toWorldRot(comp: ComponentDef, localRot: number): number {
+  let rot = -(comp.rotation + localRot);
+  if (comp.shapeMirror === 'MIRRORY') rot = -rot;
+  if (rot > 90) rot -= 180;
+  else if (rot < -90) rot += 180;
+  return rot;
 }

@@ -57,7 +57,7 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   const { layerGroups: routeLayerGroups, viaPadGroups, viaDrillGroup, labelsGroup, routeTextGroup } = renderRoutes(data.routes, data.pads, style, data.padstacks);
 
   // Render components
-  const { compGroup, padGroups, silkOutlineGroups, silkTextGroups, valueTextGroups, thDrillGroup } = renderComponents(
+  const { compGroup, padGroups, silkOutlineGroups, silkTextGroups, valueTextGroups, thDrillGroup, padLabelsGroup } = renderComponents(
     data.components, data.shapes, data.pads, data.padstacks, style, data.signals
   );
 
@@ -157,6 +157,10 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
 
   layers.set('LABELS', labelsGroup);
   leafer.add(labelsGroup);
+
+  // Pad labels (pin net names)
+  layers.set('PAD_LABELS', padLabelsGroup);
+  leafer.add(padLabelsGroup);
 
   // Fit view to board bounds
   const pad = Math.max(bw, bh) * 0.05;
