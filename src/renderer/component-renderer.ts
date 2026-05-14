@@ -1,6 +1,6 @@
 import type { ComponentDef, ShapeDef, PadDef, PadstackDef, SignalDef, RenderStyle, GenCADPrimitive, ArtworkDef } from '../parser/types';
 import { Group, Ellipse, Text } from 'leafer-ui';
-import { primitiveToUI, primitivesToPath, primitivesToStrokePath } from './primitives';
+import { primitiveToUI, primitivesToPath } from './primitives';
 import { getLayerColor } from './colors';
 
 export interface ComponentRenderResult {
@@ -112,10 +112,9 @@ export function renderComponents(
     const mirrorX = comp.shapeMirror === 'MIRRORY';
     const mirrorY = comp.shapeMirror === 'MIRRORX';
 
-    // Shape outline → silkscreen layer (batched for performance)
-    const lineArcPrims = shape.primitives.filter(p => p.type === 'LINE' || p.type === 'ARC');
-    if (lineArcPrims.length > 0) {
-      const pathEl = primitivesToStrokePath(lineArcPrims, outlineColor, sw);
+    // Shape outline → silkscreen layer
+    for (const p of shape.primitives) {
+      const el = primitiveToUI(p, outlineColor, sw);
       const oWrap = new Group({
         x: cx,
         y: cy,
@@ -123,37 +122,8 @@ export function renderComponents(
         scaleX: mirrorX ? -1 : 1,
         scaleY: mirrorY ? -1 : 1,
       });
-      oWrap.add(pathEl);
-      (oWrap as any)._component = comp.name;
+      oWrap.add(el);
       getSilkOutlineGroup(silkLayer).add(oWrap);
-    }
-    // Circles and rectangles rendered individually
-    for (const p of shape.primitives) {
-      if (p.type === 'CIRCLE') {
-        const el = primitiveToUI(p, outlineColor, sw);
-        const oWrap = new Group({
-          x: cx,
-          y: cy,
-          rotation: rot,
-          scaleX: mirrorX ? -1 : 1,
-          scaleY: mirrorY ? -1 : 1,
-        });
-        oWrap.add(el);
-        (oWrap as any)._component = comp.name;
-        getSilkOutlineGroup(silkLayer).add(oWrap);
-      } else if (p.type === 'RECTANGLE') {
-        const el = primitiveToUI(p, outlineColor, sw);
-        const oWrap = new Group({
-          x: cx,
-          y: cy,
-          rotation: rot,
-          scaleX: mirrorX ? -1 : 1,
-          scaleY: mirrorY ? -1 : 1,
-        });
-        oWrap.add(el);
-        (oWrap as any)._component = comp.name;
-        getSilkOutlineGroup(silkLayer).add(oWrap);
-      }
     }
 
     // Shape artwork references

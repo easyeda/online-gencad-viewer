@@ -21,9 +21,9 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
     type: 'design',
   });
 
-  // Enable viewport optimization for better zoom/pan performance
+  // Disable viewport wheel handling - we handle zoom manually
   addViewportConfig(leafer, {
-    wheel: { preventDefault: false },
+    wheel: { preventDefault: true },
     pointer: { preventDefaultMenu: true },
     zoom: { min: 0.01, max: 256 },
   });
@@ -208,12 +208,21 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
 
   // Count elements
   let elemCount = 0;
-  for (const g of layers.values()) elemCount += (g.children?.length || 0);
+  const layerBreakdown: string[] = [];
+  for (const [key, g] of layers) {
+    const count = g.children?.length || 0;
+    elemCount += count;
+    layerBreakdown.push(`${key}=${count}`);
+  }
   console.log(`[GC Perf] 图层数=${layers.size}, 图元数=${elemCount}, 走线数=${data.routes.length}`);
+  console.log(`[GC Perf] 图层详情: ${layerBreakdown.join(', ')}`);
+  console.log(`[GC Perf] 总元素数=${elemCount}`);
 
-  // Manual wheel zoom (directly set zoomLayer transform to zoom around cursor)
+  // Manual wheel zoom - disable viewport's wheel handling
+  // Use capture phase to intercept before viewport
   container.addEventListener('wheel', (e: WheelEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     const factor = e.deltaY < 0 ? 1.35 : 1 / 1.35;
     const zl = leafer.zoomLayer;
     const cur = zl.scaleX || 1;
@@ -229,7 +238,7 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
     zl.y = newY;
     zl.scaleX = next;
     zl.scaleY = next;
-  }, { passive: false });
+  }, { passive: false, capture: true });
 
   // Prevent right-click context menu
   container.addEventListener('contextmenu', (e: MouseEvent) => e.preventDefault());

@@ -1,6 +1,6 @@
 import type { RouteDef, PadDef, PadstackDef, RenderStyle } from '../parser/types';
-import { Group, Ellipse, Text, Path, Rect } from 'leafer-ui';
-import { primitivesToStrokePath } from './primitives';
+import { Group, Ellipse, Text, Path } from 'leafer-ui';
+import { primitiveToUI } from './primitives';
 import { getLayerColor } from './colors';
 
 export function renderRoutes(
@@ -69,89 +69,57 @@ export function renderRoutes(
         }
       }
 
-      // Batch lines/arcs into a single stroke Path for performance
-      const lineArcPrims = seg.primitives.filter(p => p.type === 'LINE' || p.type === 'ARC');
-      if (lineArcPrims.length > 0) {
-        const pathEl = primitivesToStrokePath(lineArcPrims, color, trackSw) as any;
-        pathEl._signal = route.signalName;
-        pathEl._type = 'route';
-        pathEl._layer = seg.layer;
-        segGroup.add(pathEl);
-      }
-
-      // Circles rendered individually as stroked ellipses
-      const circlePrims = seg.primitives.filter(p => p.type === 'CIRCLE');
-      for (const c of circlePrims) {
-        const circleEl = new Ellipse({
-          x: c.xc - c.r,
-          y: -c.yc - c.r,
-          width: c.r * 2,
-          height: c.r * 2,
-          stroke: color,
-          strokeWidth: trackSw,
-          fill: undefined,
-        }) as any;
-        circleEl._signal = route.signalName;
-        circleEl._type = 'route';
-        segGroup.add(circleEl);
-      }
-
-      // Rectangles rendered individually
-      const rectPrims = seg.primitives.filter(p => p.type === 'RECTANGLE');
-      for (const r of rectPrims) {
-        const rectEl = new Rect({
-          x: r.x,
-          y: -(r.y + r.h),
-          width: r.w,
-          height: r.h,
-          stroke: color,
-          strokeWidth: trackSw,
-          fill: undefined,
-        }) as any;
-        rectEl._signal = route.signalName;
-        rectEl._type = 'route';
-        segGroup.add(rectEl);
+      // Each primitive is its own element (keeps shapes separate)
+      for (const p of seg.primitives) {
+        const el = primitiveToUI(p, color, trackSw) as any;
+        el._signal = route.signalName;
+        el._type = 'route';
+        segGroup.add(el);
       }
 
       const targetGroup = layerGroups.get(seg.layer);
       if (targetGroup) targetGroup.add(segGroup);
 
-      // Add net name label on longest primitive
-      if (seg.primitives.length > 0 && route.signalName) {
-        let cx = 0, cy = 0, angle = 0, maxLen = 0;
-        const lines = seg.primitives.filter(p => p.type === 'LINE') as { type: 'LINE'; x1: number; y1: number; x2: number; y2: number }[];
-        if (lines.length > 0) {
-          let longest = lines[0];
-          for (const l of lines) {
-            const len = Math.sqrt((l.x2 - l.x1) ** 2 + (l.y2 - l.y1) ** 2);
-            if (len > maxLen) { maxLen = len; longest = l; }
-          }
-          cx = (longest.x1 + longest.x2) / 2;
-          cy = -(longest.y1 + longest.y2) / 2;
-          angle = Math.atan2(-(longest.y2 - longest.y1), longest.x2 - longest.x1) * 180 / Math.PI;
-        } else {
-          // No LINE — use first primitive center
-          const p = seg.primitives[0];
-          if (p.type === 'ARC') { cx = (p.xs + p.xe) / 2; cy = -(p.ys + p.ye) / 2; }
-          else if (p.type === 'CIRCLE') { cx = p.xc; cy = -p.yc; }
-          else if (p.type === 'RECTANGLE') { cx = p.x + p.w / 2; cy = -(p.y + p.h / 2); }
+      // Compute label position from longest LINE primitive
+      let cx = 0, cy = 0, angle = 0, maxLen = 0;
+      const lines = seg.primitives.filter(p => p.type === 'LINE') as { type: 'LINE'; x1: number; y1: number; x2: number; y2: number }[];
+      if (lines.length > 0) {
+        let longest = lines[0];
+        for (const l of lines) {
+          const len = Math.sqrt((l.x2 - l.x1) ** 2 + (l.y2 - l.y1) ** 2);
+          if (len > maxLen) { maxLen = len; longest = l; }
         }
+        cx = (longest.x1 + longest.x2) / 2;
+        cy = -(longest.y1 + longest.y2) / 2;
+        angle = Math.atan2(-(longest.y2 - longest.y1), longest.x2 - longest.x1) * 180 / Math.PI;
         if (angle > 90) angle -= 180;
         else if (angle < -90) angle += 180;
-        const maxFontByLen = maxLen > 0 ? maxLen / Math.max(route.signalName.length * 0.6, 1) : trackSw;
-        const fontSize = Math.max(Math.min(trackSw, maxFontByLen), sw * 3);
+      }
+
+      // Add net name label for each LINE in the segment
+      // Start with sw * 2, can increase if needed
+      const fontSize = Math.max(trackSw * 0.8, 0.05);
+
+      for (const line of lines) {
+        const lcx = (line.x1 + line.x2) / 2;
+        const lcy = -(line.y1 + line.y2) / 2;
+        let lang = Math.atan2(-(line.y2 - line.y1), line.x2 - line.x1) * 180 / Math.PI;
+        if (lang > 90) lang -= 180;
+        else if (lang < -90) lang += 180;
+
         const textEl = new Text({
-          x: cx,
-          y: cy,
+          x: lcx,
+          y: lcy,
           text: route.signalName,
           fontSize,
           fill: '#ffffff',
           textAlign: 'center',
           verticalAlign: 'middle',
-          rotation: angle,
+          rotation: lang,
         });
         (textEl as any)._class = 'route-label';
-        getLabelGroup(seg.layer).add(textEl);
+        const lbl = getLabelGroup(seg.layer);
+        lbl.add(textEl);
       }
     }
 
