@@ -217,27 +217,7 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   let lastRenderTime = 0;
   const minRenderInterval = 16; // ~60fps max
 
-  function scheduleRender() {
-    needsRender = true;
-    if (renderFrameId) return;
-    renderFrameId = requestAnimationFrame(() => {
-      renderFrameId = null;
-      const now = performance.now();
-      const elapsed = now - lastRenderTime;
-      if (elapsed < minRenderInterval) {
-        // Skip this frame, schedule next
-        scheduleRender();
-        return;
-      }
-      if (needsRender && (leafer as any).render) {
-        lastRenderTime = now;
-        needsRender = false;
-        (leafer as any).render();
-      }
-    });
-  }
-
-  // Smooth zoom around cursor
+  // Smooth zoom around cursor - direct update without throttling
   container.addEventListener('wheel', (e: WheelEvent) => {
     e.preventDefault();
     const startMs = performance.now();
@@ -245,21 +225,25 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
     const zl = leafer.zoomLayer;
     const cur = zl.scaleX || 1;
     const next = Math.max(Math.min(cur * factor, 10000), 0.001);
+
+    // Get cursor position in screen coordinates
     const rect = container.getBoundingClientRect();
     const sx = e.clientX - rect.left;
     const sy = e.clientY - rect.top;
 
-    // Original formula that works correctly
+    // Calculate new position keeping the point under cursor fixed
     const ratio = next / cur;
-    const newX = sx - (sx - (zl.x || 0)) * ratio;
-    const newY = sy - (sy - (zl.y || 0)) * ratio;
+    const newX = sx - (sx - (zl.x || 0)) / ratio;
+    const newY = sy - (sy - (zl.y || 0)) / ratio;
 
-    zl.x = newX;
-    zl.y = newY;
     zl.scaleX = next;
     zl.scaleY = next;
+    zl.x = newX;
+    zl.y = newY;
 
-    scheduleRender();
+    // Force immediate render for responsiveness
+    if ((leafer as any).render) (leafer as any).render();
+
     requestAnimationFrame(() => {
       const elapsed = performance.now() - startMs;
       if (elapsed > 5) console.log(`[GC Perf] 缩放: ${elapsed.toFixed(1)}ms, scale=${next.toFixed(2)}`);
@@ -269,7 +253,7 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   // Prevent right-click context menu
   container.addEventListener('contextmenu', (e: MouseEvent) => e.preventDefault());
 
-  // Smooth pan with render throttle
+  // Smooth pan
   let dragging = false;
   let lastX = 0, lastY = 0;
 
@@ -292,7 +276,7 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
     const zl = leafer.zoomLayer;
     zl.x = (zl.x || 0) + dx;
     zl.y = (zl.y || 0) + dy;
-    scheduleRender();
+    if ((leafer as any).render) (leafer as any).render();
     requestAnimationFrame(() => {
       const elapsed = performance.now() - startMs;
       if (elapsed > 5) console.log(`[GC Perf] 平移: ${elapsed.toFixed(1)}ms`);
@@ -301,7 +285,6 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   const stopDrag = (e: PointerEvent) => {
     if (!dragging) return;
     dragging = false;
-    // Force render when drag ends
     if ((leafer as any).render) (leafer as any).render();
     container.releasePointerCapture(e.pointerId);
     container.style.cursor = '';
