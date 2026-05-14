@@ -244,20 +244,21 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
     const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
     const zl = leafer.zoomLayer;
     const cur = zl.scaleX || 1;
-    const curX = zl.x || 0;
-    const curY = zl.y || 0;
     const next = Math.max(Math.min(cur * factor, 10000), 0.001);
     const rect = container.getBoundingClientRect();
     const sx = e.clientX - rect.left;
     const sy = e.clientY - rect.top;
-    const worldX = (sx - curX) / cur;
-    const worldY = (sy - curY) / cur;
-    const newX = sx - worldX * next;
-    const newY = sy - worldY * next;
+
+    // Original formula that works correctly
+    const ratio = next / cur;
+    const newX = sx - (sx - (zl.x || 0)) * ratio;
+    const newY = sy - (sy - (zl.y || 0)) * ratio;
+
     zl.x = newX;
     zl.y = newY;
     zl.scaleX = next;
     zl.scaleY = next;
+
     scheduleRender();
     requestAnimationFrame(() => {
       const elapsed = performance.now() - startMs;
