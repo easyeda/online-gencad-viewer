@@ -211,49 +211,30 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   for (const g of layers.values()) elemCount += (g.children?.length || 0);
   console.log(`[GC Perf] 图层数=${layers.size}, 图元数=${elemCount}, 走线数=${data.routes.length}`);
 
-  // Performance: render throttle to limit frame rate during interactions
-  let renderFrameId: number | null = null;
-  let needsRender = false;
-  let lastRenderTime = 0;
-  const minRenderInterval = 16; // ~60fps max
-
-  // Smooth zoom around cursor - using original working formula
+  // Manual wheel zoom (directly set zoomLayer transform to zoom around cursor)
   container.addEventListener('wheel', (e: WheelEvent) => {
     e.preventDefault();
-    const startMs = performance.now();
-    const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+    const factor = e.deltaY < 0 ? 1.35 : 1 / 1.35;
     const zl = leafer.zoomLayer;
     const cur = zl.scaleX || 1;
-    const next = Math.max(Math.min(cur * factor, 10000), 0.001);
-
-    // Get cursor position in screen coordinates
+    const next = Math.max(cur * factor, 0.01);
+    if (next === cur) return;
     const rect = container.getBoundingClientRect();
     const sx = e.clientX - rect.left;
     const sy = e.clientY - rect.top;
-
-    // Calculate new position - the original working formula
     const ratio = next / cur;
     const newX = sx - (sx - (zl.x || 0)) * ratio;
     const newY = sy - (sy - (zl.y || 0)) * ratio;
-
-    zl.scaleX = next;
-    zl.scaleY = next;
     zl.x = newX;
     zl.y = newY;
-
-    // Force immediate render for responsiveness
-    if ((leafer as any).render) (leafer as any).render();
-
-    requestAnimationFrame(() => {
-      const elapsed = performance.now() - startMs;
-      if (elapsed > 5) console.log(`[GC Perf] 缩放: ${elapsed.toFixed(1)}ms, scale=${next.toFixed(2)}`);
-    });
+    zl.scaleX = next;
+    zl.scaleY = next;
   }, { passive: false });
 
   // Prevent right-click context menu
   container.addEventListener('contextmenu', (e: MouseEvent) => e.preventDefault());
 
-  // Smooth pan
+  // Manual drag-to-pan (left and right button)
   let dragging = false;
   let lastX = 0, lastY = 0;
 
@@ -268,7 +249,6 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   });
   container.addEventListener('pointermove', (e: PointerEvent) => {
     if (!dragging) return;
-    const startMs = performance.now();
     const dx = e.clientX - lastX;
     const dy = e.clientY - lastY;
     lastX = e.clientX;
@@ -276,26 +256,15 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
     const zl = leafer.zoomLayer;
     zl.x = (zl.x || 0) + dx;
     zl.y = (zl.y || 0) + dy;
-    if ((leafer as any).render) (leafer as any).render();
-    requestAnimationFrame(() => {
-      const elapsed = performance.now() - startMs;
-      if (elapsed > 5) console.log(`[GC Perf] 平移: ${elapsed.toFixed(1)}ms`);
-    });
   });
   const stopDrag = (e: PointerEvent) => {
     if (!dragging) return;
     dragging = false;
-    if ((leafer as any).render) (leafer as any).render();
     container.releasePointerCapture(e.pointerId);
     container.style.cursor = '';
   };
   container.addEventListener('pointerup', stopDrag);
   container.addEventListener('pointercancel', stopDrag);
-
-  // After setup, force a single render to apply initial transform
-  requestAnimationFrame(() => {
-    (leafer as any).render?.();
-  });
 
   return { leafer, layers, style };
 }

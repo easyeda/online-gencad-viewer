@@ -1,5 +1,5 @@
 import type { GenCADPrimitive } from '../parser/types';
-import { Line, Path, Ellipse, Rect, UI } from 'leafer-ui';
+import { Line, Path, Ellipse, Rect, UI, Group } from 'leafer-ui';
 
 export function primitiveToUI(p: GenCADPrimitive, color: string, strokeWidth = 0.5, filled = false): UI {
   switch (p.type) {
@@ -115,4 +115,45 @@ function arcSVGSegment(a: { xs: number; ys: number; xe: number; ye: number; xc: 
 
   const largeArc = sweep > Math.PI ? 1 : 0;
   return `A${r} ${r} 0 ${largeArc} 0 ${a.xe} ${-a.ye}`;
+}
+
+/**
+ * Convert route primitives (lines and arcs) to a stroke Path.
+ * Used for route segments where we want stroke rendering, not fill.
+ */
+export function primitivesToStrokePath(prims: GenCADPrimitive[], color: string, strokeWidth: number): UI {
+  const parts: string[] = [];
+  let started = false;
+
+  for (const p of prims) {
+    switch (p.type) {
+      case 'LINE': {
+        if (!started) { parts.push(`M ${p.x1} ${-p.y1}`); started = true; }
+        else { parts.push(`L ${p.x1} ${-p.y1}`); }
+        parts.push(`L ${p.x2} ${-p.y2}`);
+        break;
+      }
+      case 'ARC': {
+        if (!started) { parts.push(`M ${p.xs} ${-p.ys}`); started = true; }
+        else { parts.push(`L ${p.xs} ${-p.ys}`); }
+        parts.push(arcSVGSegment(p));
+        break;
+      }
+    }
+  }
+
+  if (!started || parts.length === 0) {
+    // Return empty group as fallback
+    return new Group();
+  }
+
+  const el = new Path({
+    path: parts.join(' '),
+    stroke: color,
+    strokeWidth,
+    strokeCap: 'round',
+    strokeJoin: 'round',
+    fill: undefined,
+  });
+  return el;
 }

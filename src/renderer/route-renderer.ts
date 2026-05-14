@@ -1,6 +1,6 @@
 import type { RouteDef, PadDef, PadstackDef, RenderStyle } from '../parser/types';
-import { Group, Ellipse, Text, Path } from 'leafer-ui';
-import { primitiveToUI } from './primitives';
+import { Group, Ellipse, Text, Path, Rect } from 'leafer-ui';
+import { primitivesToStrokePath } from './primitives';
 import { getLayerColor } from './colors';
 
 export function renderRoutes(
@@ -69,9 +69,48 @@ export function renderRoutes(
         }
       }
 
-      for (const p of seg.primitives) {
-        const el = primitiveToUI(p, color, trackSw);
-        segGroup.add(el);
+      // Batch lines/arcs into a single stroke Path for performance
+      const lineArcPrims = seg.primitives.filter(p => p.type === 'LINE' || p.type === 'ARC');
+      if (lineArcPrims.length > 0) {
+        const pathEl = primitivesToStrokePath(lineArcPrims, color, trackSw) as any;
+        pathEl._signal = route.signalName;
+        pathEl._type = 'route';
+        pathEl._layer = seg.layer;
+        segGroup.add(pathEl);
+      }
+
+      // Circles rendered individually as stroked ellipses
+      const circlePrims = seg.primitives.filter(p => p.type === 'CIRCLE');
+      for (const c of circlePrims) {
+        const circleEl = new Ellipse({
+          x: c.xc - c.r,
+          y: -c.yc - c.r,
+          width: c.r * 2,
+          height: c.r * 2,
+          stroke: color,
+          strokeWidth: trackSw,
+          fill: undefined,
+        }) as any;
+        circleEl._signal = route.signalName;
+        circleEl._type = 'route';
+        segGroup.add(circleEl);
+      }
+
+      // Rectangles rendered individually
+      const rectPrims = seg.primitives.filter(p => p.type === 'RECTANGLE');
+      for (const r of rectPrims) {
+        const rectEl = new Rect({
+          x: r.x,
+          y: -(r.y + r.h),
+          width: r.w,
+          height: r.h,
+          stroke: color,
+          strokeWidth: trackSw,
+          fill: undefined,
+        }) as any;
+        rectEl._signal = route.signalName;
+        rectEl._type = 'route';
+        segGroup.add(rectEl);
       }
 
       const targetGroup = layerGroups.get(seg.layer);
