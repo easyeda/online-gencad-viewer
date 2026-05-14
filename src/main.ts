@@ -14,8 +14,15 @@ const layout = createLayout();
 let renderResult: RenderResult | null = null;
 let currentData: GenCADData | null = null;
 let refreshProps: (() => void) | null = null;
+let currentLayers: Map<string, Group> | null = null;
 
-onLangChange(() => refreshProps?.());
+onLangChange(() => {
+  refreshProps?.();
+  if (currentLayers) {
+    initLayerControls(layout.layerPanel, currentLayers);
+    initFilterControls(layout.filterPanel, currentLayers);
+  }
+});
 
 function forceSyncRender(lf: Leafer | null) {
   if (!lf) return;
@@ -47,6 +54,8 @@ function loadFile(text: string, fileName: string) {
     refreshProps = null;
     clearProperties(layout.propertyContent);
     unhighlight();
+    renderResult = renderAll(layout.canvasDiv, currentData);
+    currentLayers = renderResult.layers;
     initLayerControls(layout.layerPanel, renderResult.layers);
     initFilterControls(layout.filterPanel, renderResult.layers);
     populatePanels();

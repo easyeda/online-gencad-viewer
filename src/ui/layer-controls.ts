@@ -149,14 +149,21 @@ export function initLayerControls(panel: HTMLElement, layers: Map<string, Group>
 
 function formatLayerName(layer: string): string {
   const map: Record<string, string> = {
-    ROUTE_TOP: '顶层', ROUTE_BOTTOM: '底层',
-    SILKSCREEN_TOP: '顶层丝印层', SILKSCREEN_BOTTOM: '底层丝印层',
-    SILK_OUTLINE_TOP: '顶层丝印层', SILK_OUTLINE_BOTTOM: '底层丝印层',
-    BOARD: '板框层', TOP: '顶层', BOTTOM: '底层',
+    ROUTE_TOP: t('layerTop'), ROUTE_BOTTOM: t('layerBottom'),
+    SILKSCREEN_TOP: t('layerSilkTop'), SILKSCREEN_BOTTOM: t('layerSilkBottom'),
+    SILK_OUTLINE_TOP: t('layerSilkTop'), SILK_OUTLINE_BOTTOM: t('layerSilkBottom'),
+    BOARD: t('layerBoard'), TOP: t('layerTop'), BOTTOM: t('layerBottom'),
+    VIAS_TOP: t('layerVia'), VIAS_BOTTOM: t('layerVia'),
+    PADS_TOP: t('layerPad'), PADS_BOTTOM: t('layerPad'),
+    LABELS_TOP: t('labels'), LABELS_BOTTOM: t('labels'),
+    ROUTE_TEXTS: t('text'),
   };
   if (map[layer]) return map[layer];
-  if (layer.startsWith('ROUTE_INNER')) return '内层 ' + layer.replace('ROUTE_INNER', '').replace('-', '');
-  if (layer.startsWith('INNER')) return '内层 ' + layer.replace('INNER', '').replace('-', '');
+  if (layer.startsWith('ROUTE_INNER')) return t('layerInner') + ' ' + layer.replace('ROUTE_INNER', '').replace('-', '');
+  if (layer.startsWith('INNER')) return t('layerInner') + ' ' + layer.replace('INNER', '').replace('-', '');
+  if (layer.startsWith('VIAS_')) return t('layerVia') + ' ' + layer.replace('VIAS_', '');
+  if (layer.startsWith('PADS_')) return t('layerPad') + ' ' + layer.replace('PADS_', '');
+  if (layer.startsWith('LABELS_')) return t('labels') + ' ' + layer.replace('LABELS_', '');
   return layer;
 }
 
