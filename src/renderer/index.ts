@@ -217,20 +217,34 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
     const startMs = performance.now();
     const factor = e.deltaY < 0 ? 1.08 : 1 / 1.08; // Smaller step for smoother feel
     const zl = leafer.zoomLayer;
+
+    // Get current transform
     const cur = zl.scaleX || 1;
+    const curX = zl.x || 0;
+    const curY = zl.y || 0;
     const next = Math.max(Math.min(cur * factor, 10000), 0.001);
+
+    // Convert cursor position to world coordinates
     const rect = container.getBoundingClientRect();
     const sx = e.clientX - rect.left;
     const sy = e.clientY - rect.top;
-    const ratio = next / cur;
-    const newX = sx - (sx - (zl.x || 0)) * ratio;
-    const newY = sy - (sy - (zl.y || 0)) * ratio;
+    const worldX = (sx - curX) / cur;
+    const worldY = (sy - curY) / cur;
+
+    // Calculate new screen position to keep world point under cursor
+    const newX = sx - worldX * next;
+    const newY = sy - worldY * next;
+
     zl.x = newX;
     zl.y = newY;
     zl.scaleX = next;
     zl.scaleY = next;
-    const elapsed = performance.now() - startMs;
-    if (elapsed > 5) console.log(`[GC Perf] 缩放: ${elapsed.toFixed(1)}ms, scale=${next.toFixed(2)}`);
+
+    // Log timing after LeaferJS renders
+    requestAnimationFrame(() => {
+      const elapsed = performance.now() - startMs;
+      if (elapsed > 5) console.log(`[GC Perf] 缩放: ${elapsed.toFixed(1)}ms, scale=${next.toFixed(2)}`);
+    });
   }, { passive: false });
 
   // Prevent right-click context menu
@@ -259,8 +273,10 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
     const zl = leafer.zoomLayer;
     zl.x = (zl.x || 0) + dx;
     zl.y = (zl.y || 0) + dy;
-    const elapsed = performance.now() - startMs;
-    if (elapsed > 5) console.log(`[GC Perf] 平移: ${elapsed.toFixed(1)}ms`);
+    requestAnimationFrame(() => {
+      const elapsed = performance.now() - startMs;
+      if (elapsed > 5) console.log(`[GC Perf] 平移: ${elapsed.toFixed(1)}ms`);
+    });
   });
   const stopDrag = (e: PointerEvent) => {
     if (!dragging) return;
