@@ -157,7 +157,20 @@ layout.btnZoomOut.addEventListener('click', () => {
   }
 });
 layout.btnFit.addEventListener('click', () => {
-  if (renderResult) renderResult.leafer.zoom('fit');
+  if (renderResult) {
+    const l = renderResult.leafer;
+    const bounds = (l as any).__fitBounds;
+    const fitScale = (l as any).__fitScale;
+    if (bounds && fitScale) {
+      const zl = l.zoomLayer;
+      zl.x = bounds.x * fitScale;
+      zl.y = bounds.y * fitScale;
+      zl.scaleX = fitScale;
+      zl.scaleY = fitScale;
+    } else {
+      l.zoom('fit');
+    }
+  }
 });
 
 // Highlight state

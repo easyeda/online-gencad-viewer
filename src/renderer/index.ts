@@ -176,13 +176,17 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
 
   performance.mark('gc:render-assemble-end');
   performance.mark('gc:render-zoom-start');
-  // Use immediate mode to speed up initial zoom
-  (leafer as any).tree?.set && ((leafer as any).tree.set('optimize', false));
   // Use direct transform instead of leafer.zoom() to avoid layout recalculation
   const zl = leafer.zoomLayer;
   const scaleX = container.clientWidth / (bw + pad * 2);
   const scaleY = container.clientHeight / (bh + pad * 2);
   const initScale = Math.min(scaleX, scaleY);
+
+  // Store initial bounds for fit view
+  (leafer as any).__fitBounds = { x: minX - pad, y: -(maxY + pad), width: bw + pad * 2, height: bh + pad * 2 };
+  (leafer as any).__fitScale = initScale;
+
+  // Set transform directly
   zl.x = -(minX - pad);
   zl.y = -(maxY + pad);
   zl.scaleX = initScale;
@@ -205,46 +209,34 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   for (const g of layers.values()) elemCount += (g.children?.length || 0);
   console.log(`[GC Perf] 图层数=${layers.size}, 图元数=${elemCount}, 走线数=${data.routes.length}`);
 
-  // Performance: throttle wheel zoom with requestAnimationFrame
-  let rafId: number | null = null;
-  let pendingWheel: WheelEvent | null = null;
-
+  // Smooth zoom around cursor - continuous, no throttling
   container.addEventListener('wheel', (e: WheelEvent) => {
     e.preventDefault();
-    pendingWheel = e;
-    if (rafId) return;
-    const start = performance.now();
-    rafId = requestAnimationFrame(() => {
-      rafId = null;
-      const we = pendingWheel!;
-      pendingWheel = null;
-      const factor = we.deltaY < 0 ? 1.35 : 1 / 1.35;
-      const zl = leafer.zoomLayer;
-      const cur = zl.scaleX || 1;
-      const next = Math.max(cur * factor, 0.01);
-      if (next === cur) return;
-      const rect = container.getBoundingClientRect();
-      const sx = we.clientX - rect.left;
-      const sy = we.clientY - rect.top;
-      const ratio = next / cur;
-      const newX = sx - (sx - (zl.x || 0)) * ratio;
-      const newY = sy - (sy - (zl.y || 0)) * ratio;
-      zl.x = newX;
-      zl.y = newY;
-      zl.scaleX = next;
-      zl.scaleY = next;
-      console.log(`[GC Perf] 缩放: ${(performance.now() - start).toFixed(2)}ms, scale=${next.toFixed(4)}`);
-    });
+    const startMs = performance.now();
+    const factor = e.deltaY < 0 ? 1.08 : 1 / 1.08; // Smaller step for smoother feel
+    const zl = leafer.zoomLayer;
+    const cur = zl.scaleX || 1;
+    const next = Math.max(Math.min(cur * factor, 10000), 0.001);
+    const rect = container.getBoundingClientRect();
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+    const ratio = next / cur;
+    const newX = sx - (sx - (zl.x || 0)) * ratio;
+    const newY = sy - (sy - (zl.y || 0)) * ratio;
+    zl.x = newX;
+    zl.y = newY;
+    zl.scaleX = next;
+    zl.scaleY = next;
+    const elapsed = performance.now() - startMs;
+    if (elapsed > 5) console.log(`[GC Perf] 缩放: ${elapsed.toFixed(1)}ms, scale=${next.toFixed(2)}`);
   }, { passive: false });
 
   // Prevent right-click context menu
   container.addEventListener('contextmenu', (e: MouseEvent) => e.preventDefault());
 
-  // Performance: throttle drag-to-pan with requestAnimationFrame
+  // Smooth pan - direct update on every move
   let dragging = false;
   let lastX = 0, lastY = 0;
-  let panRafId: number | null = null;
-  let pendingDx = 0, pendingDy = 0;
 
   container.addEventListener('pointerdown', (e: PointerEvent) => {
     if (e.button === 0 || e.button === 2) {
@@ -257,33 +249,30 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   });
   container.addEventListener('pointermove', (e: PointerEvent) => {
     if (!dragging) return;
-    pendingDx += e.clientX - lastX;
-    pendingDy += e.clientY - lastY;
+    const startMs = performance.now();
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
     lastX = e.clientX;
     lastY = e.clientY;
-    if (panRafId) return;
-    panRafId = requestAnimationFrame(() => {
-      const start = performance.now();
-      panRafId = null;
-      const zl = leafer.zoomLayer;
-      zl.x = (zl.x || 0) + pendingDx;
-      zl.y = (zl.y || 0) + pendingDy;
-      pendingDx = 0;
-      pendingDy = 0;
-      console.log(`[GC Perf] 平移: ${(performance.now() - start).toFixed(2)}ms`);
-    });
+    const zl = leafer.zoomLayer;
+    zl.x = (zl.x || 0) + dx;
+    zl.y = (zl.y || 0) + dy;
+    const elapsed = performance.now() - startMs;
+    if (elapsed > 5) console.log(`[GC Perf] 平移: ${elapsed.toFixed(1)}ms`);
   });
   const stopDrag = (e: PointerEvent) => {
     if (!dragging) return;
     dragging = false;
-    if (panRafId) { cancelAnimationFrame(panRafId); panRafId = null; }
-    pendingDx = 0;
-    pendingDy = 0;
     container.releasePointerCapture(e.pointerId);
     container.style.cursor = '';
   };
   container.addEventListener('pointerup', stopDrag);
   container.addEventListener('pointercancel', stopDrag);
+
+  // After setup, force a single render to apply initial transform
+  requestAnimationFrame(() => {
+    (leafer as any).render?.();
+  });
 
   return { leafer, layers, style };
 }
