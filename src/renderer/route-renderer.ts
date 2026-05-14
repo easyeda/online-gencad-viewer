@@ -97,10 +97,15 @@ export function renderRoutes(
       }
 
       // Add net name label for each LINE in the segment
-      // Start with sw * 2, can increase if needed
-      const fontSize = Math.max(trackSw * 0.8, 0.05);
+      // fontSize = trackSw, with minimum 0.01mm for visibility (LeaferJS requires min ~0.01mm)
+      const fontSize = Math.max(trackSw, 0.01);
+      const textWidth = route.signalName.length * fontSize * 0.65;
 
       for (const line of lines) {
+        const lineLen = Math.sqrt((line.x2 - line.x1) ** 2 + (line.y2 - line.y1) ** 2);
+        if (lineLen < textWidth) { console.log(`[SKIP] signal=${route.signalName} | lineLen=${lineLen.toFixed(3)} < textW=${textWidth.toFixed(3)}`); continue; }
+        console.log(`[SHOW] signal=${route.signalName} | worldTrackSw=${trackSw.toFixed(3)} | textH=${fontSize.toFixed(3)} | lineLen=${lineLen.toFixed(3)}`);
+
         const lcx = (line.x1 + line.x2) / 2;
         const lcy = -(line.y1 + line.y2) / 2;
         let lang = Math.atan2(-(line.y2 - line.y1), line.x2 - line.x1) * 180 / Math.PI;
@@ -109,7 +114,7 @@ export function renderRoutes(
 
         const textEl = new Text({
           x: lcx,
-          y: lcy,
+          y: lcy - fontSize * 0.1,
           text: route.signalName,
           fontSize,
           fill: '#ffffff',
