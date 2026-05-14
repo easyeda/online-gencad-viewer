@@ -171,13 +171,13 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
     leafer.add(routeTextGroup);
   }
 
-  // Fit view to board bounds - do this AFTER all elements are added
+  // Fit view to board bounds - use leafer.zoom for proper coordinate handling
   const pad = Math.max(bw, bh) * 0.05;
 
   performance.mark('gc:render-assemble-end');
   performance.mark('gc:render-zoom-start');
-  // Use direct transform instead of leafer.zoom() to avoid layout recalculation
-  const zl = leafer.zoomLayer;
+
+  // Calculate initial scale
   const scaleX = container.clientWidth / (bw + pad * 2);
   const scaleY = container.clientHeight / (bh + pad * 2);
   const initScale = Math.min(scaleX, scaleY);
@@ -186,11 +186,13 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   (leafer as any).__fitBounds = { x: minX - pad, y: -(maxY + pad), width: bw + pad * 2, height: bh + pad * 2 };
   (leafer as any).__fitScale = initScale;
 
-  // Set transform directly
-  zl.x = -(minX - pad);
-  zl.y = -(maxY + pad);
-  zl.scaleX = initScale;
-  zl.scaleY = initScale;
+  // Set transform using zoom() for proper coordinate handling
+  leafer.zoom({
+    x: minX - pad,
+    y: -(maxY + pad),
+    width: bw + pad * 2,
+    height: bh + pad * 2,
+  });
   performance.mark('gc:render-zoom-end');
   performance.measure('gc:render-zoom', 'gc:render-zoom-start', 'gc:render-zoom-end');
   performance.mark('gc:render-all-end');
