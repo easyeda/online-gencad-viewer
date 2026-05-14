@@ -217,7 +217,7 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
   let lastRenderTime = 0;
   const minRenderInterval = 16; // ~60fps max
 
-  // Smooth zoom around cursor - direct update without throttling
+  // Smooth zoom around cursor - using original working formula
   container.addEventListener('wheel', (e: WheelEvent) => {
     e.preventDefault();
     const startMs = performance.now();
@@ -231,10 +231,10 @@ export function renderAll(container: HTMLDivElement, data: GenCADData): RenderRe
     const sx = e.clientX - rect.left;
     const sy = e.clientY - rect.top;
 
-    // Calculate new position keeping the point under cursor fixed
+    // Calculate new position - the original working formula
     const ratio = next / cur;
-    const newX = sx - (sx - (zl.x || 0)) / ratio;
-    const newY = sy - (sy - (zl.y || 0)) / ratio;
+    const newX = sx - (sx - (zl.x || 0)) * ratio;
+    const newY = sy - (sy - (zl.y || 0)) * ratio;
 
     zl.scaleX = next;
     zl.scaleY = next;
