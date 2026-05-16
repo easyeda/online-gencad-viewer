@@ -4,8 +4,6 @@
 
 在线 GenCAD (.cad) PCB 文件查看器，支持多层布局、走线、焊盘、过孔、丝印等元素的交互式可视化展示。
 
-你可以直接在这里使用：https://pcbtool.net/tools/online-gencad-viewer.html
-
 也可以下载构建好的html文件，在浏览器打开使用 [online-gencad-viewer.html](./dist/online-gencad-viewer.html)
 
 ## 功能特性
