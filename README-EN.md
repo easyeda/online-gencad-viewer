@@ -2,11 +2,9 @@
 
 English | [中文](./README.md)
 
-A free online interactive viewer for GenCAD (.cad) PCB files, supporting multi-layer layout, routing, pads, vias, silkscreen, and more.
+A free online interactive viewer for GenCAD (.cad) PCB files, supporting multi-layer layout, routing, pads, vias, silkscreen, and more
 
-you can use it directly at: https://pcbtool.net/tools/online-gencad-viewer.html
-
-or you can download the built html and open at browser: [online-gencad-viewer.html](./dist/online-gencad-viewer.html)
+you can download the built html and open at browser: [online-gencad-viewer.html](./dist/online-gencad-viewer.html)
 
 ## Features
 
